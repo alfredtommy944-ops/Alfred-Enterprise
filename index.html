@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfred Enterprise | Quality Electronics & Financial Services</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#d4af37">
+    <link rel="apple-touch-icon" href="/icons/icon-512.png">
+    <style>
+        /* --- LUXURIOUS GOLD & EMERALD THEME ENHANCEMENTS --- */
+        body {
+            background: radial-gradient(circle at top, #0f172a 0%, #060913 100%) !important;
+            color: #f8fafc;
+        }
+
+        .luxury-card {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.96));
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 22px auto;
+            max-width: 960px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .luxury-gold-title {
+            background: linear-gradient(90deg, #f3e5ab, #d4af37, #aa7c11);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .service-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .service-pill {
+            background: rgba(212, 175, 55, 0.12);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            color: #fde68a;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .faith-banner {
+            background: linear-gradient(135deg, rgba(30, 27, 75, 0.7), rgba(15, 23, 42, 0.95));
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            border-radius: 16px;
+            padding: 22px;
+            margin: 24px auto;
+            max-width: 960px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
+        }
+
+        .faith-quote {
+            font-style: italic;
+            color: #fef3c7;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .faith-ref {
+            color: #d4af37;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans pb-20">
+
+    <!-- Header & Business Profile -->
+    <header class="bg-slate-900/90 border-b border-amber-500/30 p-4 sticky top-0 z-50 backdrop-blur shadow-lg">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <img id="header-profile-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Business Owner" class="w-12 h-12 rounded-full object-cover border-2 border-amber-400 shadow">
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide luxury-gold-title">Alfred Enterprise</h1>
+                    <p class="text-xs text-slate-300">IDA, Kenema City, Sierra Leone | +23276655025</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleCartModal()" class="bg-amber-600 hover:bg-amber-500 text-slate-950 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow transition">
+                    🛒 Cart <span id="cart-count" class="bg-slate-950 text-amber-300 px-2 py-0.5 rounded-full text-xs font-bold">0</span>
+                </button>
+                <button id="owner-toggle-btn" onclick="toggleOwnerMode()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg font-medium text-sm transition">
+                    Owner Login
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto p-4 space-y-8 mt-4">
+
+        <!-- Banner / Intro -->
+        <section class="luxury-card text-center relative overflow-hidden">
+            <h2 class="text-2xl sm:text-3xl font-extrabold mb-2 luxury-gold-title">Welcome to Alfred Enterprise</h2>
+            <p class="text-sm text-slate-300 max-w-2xl mx-auto mb-4">Your premier destination for certified electronics, power solutions, and fast financial mobile money transfers at IDA, Kenema.</p>
+            <div class="flex justify-center gap-4 flex-wrap">
+                <a href="#store-section" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-5 py-2.5 rounded-xl font-bold text-sm shadow">Browse Products</a>
+                <a href="#about-section" class="bg-slate-800 border border-amber-500/40 text-amber-300 hover:bg-slate-700 px-5 py-2.5 rounded-xl font-semibold text-sm shadow">About Business</a>
+            </div>
+        </section>
+
+        <!-- Private Owner Management Panel (Hidden by default) -->
+        <section id="owner-panel" class="hidden bg-slate-900 border-2 border-emerald-500 rounded-2xl p-6 shadow-xl space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-emerald-400">🛡️ Owner Management Panel (Private)</h3>
+                <button onclick="toggleOwnerMode()" class="text-xs bg-red-600 hover:bg-red-500 px-3 py-1.5 rounded-lg text-white font-semibold">Exit Owner Mode</button>
+            </div>
+
+            <!-- Profile Picture Management -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <h4 class="font-semibold text-sm text-amber-300">Business Profile Picture</h4>
+                <div class="flex flex-col sm:flex-row gap-3 items-center">
+                    <input type="file" id="profile-file-input" accept="image/*" class="w-full text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400">
+                    <button onclick="uploadProfilePicture()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 px-5 py-2 rounded-lg text-sm font-semibold whitespace-nowrap">Save Profile Picture</button>
+                </div>
+            </div>
+
+            <!-- Add New Product Form -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-4">
+                <h4 class="font-semibold text-sm text-amber-300">Add New Product Online (Multiple Sizes & Watts)</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Product Name</label>
+                        <input type="text" id="new-prod-name" placeholder="e.g. LED Bulb" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Category</label>
+                        <select id="new-prod-category" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white">
+                            <option value="Lighting & Power">Lighting & Power</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Digital Services">Digital Services</option>
+                            <option value="Hardware">Hardware</option>
+                        </select>
+                    </div>
+
+                    <!-- Multi-Size / Wattage Builder -->
+                    <div class="sm:col-span-2 bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <label class="block text-xs font-semibold text-amber-300">Sizes / Wattages & Prices (NLe)</label>
+                                <p class="text-[11px] text-slate-400">Add as many size/watt options as you need (e.g. 5W, 7W, 10W, 60W).</p>
+                            </div>
+                            <button type="button" onclick="addSizeRow()" class="bg-amber-600 hover:bg-amber-500 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold">+ Add Size/Watt</button>
+                        </div>
+                        
+                        <div id="size-rows-container" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                            <!-- Default rows for quick entry -->
+                            <div class="flex gap-2 items-center size-row">
+                                <input type="text" placeholder="Size/Watt (e.g. 5 Watts)" class="flex-1 bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white size-input-name">
+                                <input type="number" placeholder="Price NLe" class="w-28 bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white size-input-price">
+                                <button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-300 text-xs px-2 py-1">✕</button>
+                            </div>
+                            <div class="flex gap-2 items-center size-row">
+                                <input type="text" placeholder="Size/Watt (e.g. 10 Watts)" class="flex-1 bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white size-input-name">
+                                <input type="number" placeholder="Price NLe" class="w-28 bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white size-input-price">
+                                <button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-300 text-xs px-2 py-1">✕</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Product Photo</label>
+                        <input type="file" id="new-prod-image" accept="image/*" class="w-full text-xs text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-slate-950">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Description</label>
+                    <textarea id="new-prod-desc" rows="2" placeholder="Product details..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white"></textarea>
+                </div>
+                <button onclick="addNewProduct()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 py-2.5 rounded-lg font-bold text-sm shadow">ADD NEW PRODUCT</button>
+            </div>
+        </section>
+
+        <!-- Store Section -->
+        <section id="store-section" class="space-y-4">
+            <div class="flex justify-between items-center border-b border-amber-500/30 pb-2">
+                <h3 class="text-xl font-bold luxury-gold-title pl-2">Available Products</h3>
+                <span id="product-count" class="text-xs text-slate-400">Loading items...</span>
+            </div>
+            <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <!-- Dynamic Products Injected Here -->
+            </div>
+        </section>
+
+        <!-- About Alfred Enterprise & Services Section -->
+        <section id="about-section" class="luxury-card space-y-4">
+            <h2 class="text-xl font-bold luxury-gold-title">About Alfred Enterprise — IDA, Kenema</h2>
+            <p class="text-slate-300 leading-relaxed text-sm">
+                <strong>Alfred Enterprise</strong> is a trusted, premier business hub located at <strong>IDA, Kenema City</strong>. 
+                Founded and managed by <strong>Alfred</strong>, a well-known and respected businessman in the IDA community, we specialize in high-quality electronics, reliable gadgets, and fast financial solutions.
+            </p>
+            <div class="service-pills">
+                <span class="service-pill">⚡ Quality Electronics</span>
+                <span class="service-pill">🟠 Orange Money</span>
+                <span class="service-pill">🔴 AfriMoney</span>
+                <span class="service-pill">🟣 QMoney</span>
+                <span class="service-pill">🔵 BNB Transfer</span>
+                <span class="service-pill">🐧 Wave</span>
+            </div>
+        </section>
+
+        <!-- Word of Faith Section -->
+        <section class="faith-banner">
+            <p class="faith-quote">
+                "Jesus Christ is our Lord and Savior—let us follow Him. He is the Way, the Truth, and the Life; 
+                no one comes to the Father except through Him."
+            </p>
+            <span class="faith-ref">John 14:6 • Faith &amp; Truth</span>
+        </section>
+
+    </main>
+
+    <!-- Shopping Cart Modal -->
+    <div id="cart-modal" class="fixed inset-0 bg-black/70 hidden z-50 flex justify-end">
+        <div class="bg-slate-900 border-l border-amber-500/30 w-full max-w-md h-full p-6 flex flex-col justify-between shadow-2xl overflow-y-auto">
+            <div class="space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <h3 class="text-lg font-bold luxury-gold-title">Your Shopping Cart</h3>
+                    <button onclick="toggleCartModal()" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+                </div>
+                
+                <div id="cart-items" class="space-y-3 max-h-[35vh] overflow-y-auto">
+                    <p class="text-xs text-slate-400">Your cart is empty.</p>
+                </div>
+
+                <!-- Customer Details Form -->
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3 mt-2">
+                    <h4 class="font-semibold text-xs text-amber-300">Customer Details & Payment</h4>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Full Name</label>
+                        <input type="text" id="cust-name" placeholder="e.g. Mohamed Brima" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Phone Number</label>
+                        <input type="tel" id="cust-phone" placeholder="e.g. +23276XXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Delivery Location / Address</label>
+                        <input type="text" id="cust-location" placeholder="e.g. IDA, Kenema City" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Payment Method</label>
+                        <select id="cust-payment" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                            <option value="Orange Money">Orange Money</option>
+                            <option value="AfriMoney">AfriMoney</option>
+                            <option value="Cash on Delivery">Cash on Delivery</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-4 space-y-3 mt-4">
+                <div class="flex justify-between font-bold text-base">
+                    <span>Total:</span>
+                    <span id="cart-total" class="text-amber-400">NLe 0.00</span>
+                </div>
+                <button onclick="checkoutWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm shadow flex items-center justify-center gap-2">
+                    📲 Send Order via WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let products = [];
+        let cart = [];
+        let ownerKey = "";
+
+        // Initialize App on Load
+        window.addEventListener("DOMContentLoaded", () => {
+            loadProfilePicture();
+            loadProducts();
+        });
+
+        // Toggle Owner Mode with Password Prompt
+        function toggleOwnerMode() {
+            const panel = document.getElementById("owner-panel");
+            if (panel.classList.contains("hidden")) {
+                const key = prompt("Enter Owner Login Code:");
+                if (!key) return;
+                ownerKey = key;
+                panel.classList.remove("hidden");
+                document.getElementById("owner-toggle-btn").innerText = "Owner Mode Active";
+            } else {
+                panel.classList.add("hidden");
+                ownerKey = "";
+                document.getElementById("owner-toggle-btn").innerText = "Owner Login";
+            }
+            renderProducts();
+        }
+
+        // Add Dynamic Size Row in Owner Panel
+        function addSizeRow() {
+            const container = document.getElementById("size-rows-container");
+            const row = document.createElement("div");
+            row.className = "flex gap-2 items-center size-row";
+            row.innerHTML = `
+                <input type="text" placeholder="Size/Watt (e.g. 15 Watts)" class="flex-1 bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white size-input-name">
+                <input type="number" placeholder="Price NLe" class="w-28 bg-slate-800 border border-slate-700 rounded p-2 text-xs text-white size-input-price">
+                <button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-300 text-xs px-2 py-1">✕</button>
+            `;
+            container.appendChild(row);
+        }
+
+        // Load Profile Picture from Netlify Blobs Backend
+        async function loadProfilePicture() {
+            try {
+                const res = await fetch("/.netlify/functions/profile-picture");
+                const data = await res.json();
+                if (data && data.picture) {
+                    document.getElementById("header-profile-img").src = data.picture;
+                }
+            } catch (e) {
+                console.error("Failed to load profile picture", e);
+            }
+        }
+
+        // Upload Profile Picture
+        async function uploadProfilePicture() {
+            const fileInput = document.getElementById("profile-file-input");
+            if (fileInput.files.length === 0) {
+                alert("Please select an image file first.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64Image = e.target.result;
+                try {
+                    const res = await fetch("/.netlify/functions/profile-picture", {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-profile-upload-key": ownerKey
+                        },
+                        body: JSON.stringify({ picture: base64Image })
+                    });
+                    if (res.ok) {
+                        document.getElementById("header-profile-img").src = base64Image;
+                        alert("Profile picture saved online successfully!");
+                    } else {
+                        alert("Unauthorized or failed to save profile picture.");
+                    }
+                } catch (err) {
+                    alert("Error saving profile picture online.");
+                }
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+
+        // Load Products from Netlify Blobs Backend
+        async function loadProducts() {
+            try {
+                const res = await fetch("/.netlify/functions/products");
+                const data = await res.json();
+                products = data.products || [];
+                renderProducts();
+            } catch (e) {
+                console.error("Failed to load products", e);
+                document.getElementById("product-count").innerText = "Error loading products";
+            }
+        }
+
+        // Render Products Grid with Multiple Sizes/Watts Dropdown
+        function renderProducts() {
+            const grid = document.getElementById("products-grid");
+            document.getElementById("product-count").innerText = `${products.length} items available`;
+            if (products.length === 0) {
+                grid.innerHTML = `<p class="text-xs text-slate-400 col-span-full text-center py-6">No products found online yet. Use Owner Mode to add products.</p>`;
+                return;
+            }
+            grid.innerHTML = products.map((p, index) => {
+                let sizes = p.sizes;
+                if (!sizes || sizes.length === 0) {
+                    sizes = [{ name: 'Standard', price: p.price || 0 }];
+                }
+
+                return `
+                    <div class="bg-slate-900 border border-amber-500/20 rounded-xl overflow-hidden shadow-lg flex flex-col justify-between hover:border-amber-500/50 transition">
+                        <div>
+                            <img src="${p.image || 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=300'}" alt="${p.name}" class="w-full h-40 object-cover">
+                            <div class="p-4 space-y-2">
+                                <span class="text-xs bg-amber-950 text-amber-300 border border-amber-700/50 px-2.5 py-0.5 rounded font-semibold">${p.category}</span>
+                                <h4 class="font-bold text-base text-white">${p.name}</h4>
+                                <p class="text-xs text-slate-300 line-clamp-2">${p.description}</p>
+                                
+                                <!-- Multiple Sizes / Watts Selection Dropdown -->
+                                <div class="pt-2">
+                                    <label class="block text-[11px] text-slate-400 mb-1">Select Size / Wattage & Price:</label>
+                                    <select id="size-select-${index}" onchange="updateDisplayPrice(${index})" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-xs text-white">
+                                        ${sizes.map((s, sIndex) => `<option value="${sIndex}">${s.name} - NLe ${s.price}</option>`).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 pt-0 flex justify-between items-center border-t border-slate-800 mt-2">
+                            <span id="price-display-${index}" class="font-extrabold text-amber-400">NLe ${sizes[0].price}</span>
+                            <div class="flex gap-2">
+                                <button onclick="addToCart(${index})" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold">Add to Cart</button>
+                                ${ownerKey ? `<button onclick="deleteProduct(${index})" class="bg-red-600 hover:bg-red-500 px-2 py-1.5 rounded-lg text-xs text-white">Delete</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update Price on Screen when customer selects a different watt/size
+        function updateDisplayPrice(index) {
+            const select = document.getElementById(`size-select-${index}`);
+            const selectedIdx = select.value;
+            const p = products[index];
+            let sizes = p.sizes && p.sizes.length > 0 ? p.sizes : [{ name: 'Standard', price: p.price || 0 }];
+            const chosenSize = sizes[selectedIdx];
+            document.getElementById(`price-display-${index}`).innerText = `NLe ${chosenSize.price}`;
+        }
+
+        // Add New Product with Multiple Sizes/Watts
+        async function addNewProduct() {
+            const name = document.getElementById("new-prod-name").value.trim();
+            const category = document.getElementById("new-prod-category").value;
+            const desc = document.getElementById("new-prod-desc").value.trim();
+            const fileInput = document.getElementById("new-prod-image");
+
+            if (!name) {
+                alert("Please provide a product name.");
+                return;
+            }
+
+            // Gather all dynamic size/watt rows
+            let sizes = [];
+            const rowElements = document.querySelectorAll(".size-row");
+            rowElements.forEach(row => {
+                const sName = row.querySelector(".size-input-name").value.trim();
+                const sPrice = row.querySelector(".size-input-price").value;
+                if (sName && sPrice) {
+                    sizes.push({ name: sName, price: parseFloat(sPrice) });
+                }
+            });
+
+            if (sizes.length === 0) {
+                alert("Please add at least one size/wattage option and its price.");
+                return;
+            }
+
+            const saveNewItem = async (imageUrl) => {
+                const newProduct = { 
+                    name, 
+                    category, 
+                    price: sizes[0].price, 
+                    sizes, 
+                    description: desc, 
+                    image: imageUrl || "" 
+                };
+                products.push(newProduct);
+                try {
+                    const res = await fetch("/.netlify/functions/products", {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-profile-upload-key": ownerKey
+                        },
+                        body: JSON.stringify({ products })
+                    });
+                    if (res.ok) {
+                        alert("Product with multiple wattages/sizes saved online successfully!");
+                        document.getElementById("new-prod-name").value = "";
+                        document.getElementById("new-prod-desc").value = "";
+                        document.getElementById("new-prod-image").value = "";
+                        renderProducts();
+                    } else {
+                        alert("Unauthorized or failed to save product online.");
+                        products.pop();
+                    }
+                } catch (e) {
+                    alert("Error communicating with online server.");
+                    products.pop();
+                }
+            };
+
+            if (fileInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) { saveNewItem(e.target.result); };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                saveNewItem("");
+            }
+        }
+
+        // Delete Product
+        async function deleteProduct(index) {
+            if (!confirm("Are you sure you want to delete this product?")) return;
+            products.splice(index, 1);
+            try {
+                await fetch("/.netlify/functions/products", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", "x-profile-upload-key": ownerKey },
+                    body: JSON.stringify({ products })
+                });
+                renderProducts();
+            } catch (e) {
+                alert("Failed to delete product online.");
+            }
+        }
+
+        // Shopping Cart Management
+        function toggleCartModal() {
+            const modal = document.getElementById("cart-modal");
+            modal.classList.toggle("hidden");
+        }
+
+        function addToCart(index) {
+            const prod = products[index];
+            let sizes = prod.sizes && prod.sizes.length > 0 ? prod.sizes : [{ name: 'Standard', price: prod.price || 0 }];
+            
+            const select = document.getElementById(`size-select-${index}`);
+            const selectedIdx = select ? select.value : 0;
+            const chosenSize = sizes[selectedIdx];
+
+            const cartItem = {
+                name: prod.name,
+                sizeName: chosenSize.name,
+                price: chosenSize.price
+            };
+
+            cart.push(cartItem);
+            updateCartUI();
+            alert(`${prod.name} (${chosenSize.name}) added to cart!`);
+        }
+
+        function updateCartUI() {
+            document.getElementById("cart-count").innerText = cart.length;
+            const container = document.getElementById("cart-items");
+            if (cart.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400">Your cart is empty.</p>`;
+                document.getElementById("cart-total").innerText = "NLe 0.00";
+                return;
+            }
+            let total = 0;
+            container.innerHTML = cart.map((item, i) => {
+                total += parseFloat(item.price || 0);
+                return `
+                    <div class="flex justify-between items-center bg-slate-800 p-3 rounded-lg border border-slate-700 text-sm">
+                        <div>
+                            <p class="font-bold text-white">${item.name} <span class="text-xs text-amber-300 font-normal">(${item.sizeName})</span></p>
+                            <p class="text-xs text-amber-400">NLe ${item.price}</p>
+                        </div>
+                        <button onclick="removeFromCart(${i})" class="text-xs text-red-400 hover:text-red-300">Remove</button>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById("cart-total").innerText = `NLe ${total.toFixed(2)}`;
+        }
+
+        function removeFromCart(i) {
+            cart.splice(i, 1);
+            updateCartUI();
+        }
+
+        // WhatsApp Ordering with Customer Details & Sizes/Watts
+        function checkoutWhatsApp() {
+            if (cart.length === 0) {
+                alert("Your cart is empty!");
+                return;
+            }
+
+            const name = document.getElementById("cust-name").value.trim();
+            const phone = document.getElementById("cust-phone").value.trim();
+            const location = document.getElementById("cust-location").value.trim();
+            const payment = document.getElementById("cust-payment").value;
+
+            if (!name || !phone || !location) {
+                alert("Please fill in your Name, Phone Number, and Location before placing your order.");
+                return;
+            }
+
+            let text = `Hello Alfred Enterprise, I want to place an order:%0A%0A`;
+            text += `👤 *Customer Details:*%0A`;
+            text += `- Name: ${name}%0A`;
+            text += `- Phone: ${phone}%0A`;
+            text += `- Location: ${location}%0A`;
+            text += `- Payment Method: ${payment}%0A%0A`;
+            text += `🛒 *Ordered Items:*%0A`;
+
+            let total = 0;
+            cart.forEach((item, index) => {
+                text += `${index + 1}. ${item.name} [Option: ${item.sizeName}] - NLe ${item.price}%0A`;
+                total += parseFloat(item.price || 0);
+            });
+            text += `%0A💰 *Total Amount:* NLe ${total.toFixed(2)}%0APlease confirm my order.`;
+            
+            window.open(`https://wa.me/23276655025?text=${text}`, '_blank');
+        }
+    </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(() => console.log('Service Worker registered successfully'))
+            .catch((err) => console.log('Service Worker registration failed: ', err));
+        });
+      }
+    </script>
+</body>
+</html>
