@@ -286,10 +286,24 @@
     <script>
         const CACHE_PRODUCTS_KEY = "alfred_ent_cached_products_v1";
         const CACHE_PROFILE_KEY = "alfred_ent_cached_profile_v1";
+        const SESSION_OWNER_KEY = "alfred_ent_owner_key_v1";
 
         let products = [];
         let cart = [];
         let ownerKey = "";
+
+        try {
+            ownerKey = (sessionStorage.getItem(SESSION_OWNER_KEY) || "").trim();
+        } catch (e) {}
+
+        function getOwnerHeaders() {
+            const cleanKey = (ownerKey || "").trim();
+            return {
+                "Content-Type": "application/json",
+                "x-profile-upload-key": cleanKey,
+                "x-owner-upload-key": cleanKey
+            };
+        }
 
         // Apply cached profile picture & products immediately if available
         function hydrateFromCache() {
@@ -359,18 +373,35 @@
         loadProfilePicture();
         loadProducts();
 
+        // Restore Owner Mode UI if session key exists
+        if (ownerKey) {
+            document.getElementById("owner-panel").classList.remove("hidden");
+            document.getElementById("owner-toggle-btn").innerText = "Owner Mode Active";
+        }
+
         // Toggle Owner Mode with Password Prompt
         function toggleOwnerMode() {
             const panel = document.getElementById("owner-panel");
-            if (panel.classList.contains("hidden")) {
-                const key = prompt("Enter Owner Login Code:");
-                if (!key) return;
-                ownerKey = key;
+            if (panel.classList.contains("hidden") || !ownerKey) {
+                const rawKey = prompt("Enter Owner Login Code:");
+                if (!rawKey) return;
+                const cleanKey = rawKey.trim();
+                if (!cleanKey) {
+                    alert("Please enter your Owner Login Code.");
+                    return;
+                }
+                ownerKey = cleanKey;
+                try {
+                    sessionStorage.setItem(SESSION_OWNER_KEY, ownerKey);
+                } catch (e) {}
                 panel.classList.remove("hidden");
                 document.getElementById("owner-toggle-btn").innerText = "Owner Mode Active";
             } else {
                 panel.classList.add("hidden");
                 ownerKey = "";
+                try {
+                    sessionStorage.removeItem(SESSION_OWNER_KEY);
+                } catch (e) {}
                 document.getElementById("owner-toggle-btn").innerText = "Owner Login";
             }
             renderProducts();
@@ -407,6 +438,10 @@
 
         // Upload Profile Picture (compressed + instant preview + online save)
         async function uploadProfilePicture() {
+            if (!ownerKey) {
+                toggleOwnerMode();
+                if (!ownerKey) return;
+            }
             const fileInput = document.getElementById("profile-file-input");
             if (fileInput.files.length === 0) {
                 alert("Please select an image file first.");
@@ -420,12 +455,10 @@
 
                 const res = await fetch("/.netlify/functions/profile-picture", {
                     method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "x-profile-upload-key": ownerKey
-                    },
+                    headers: getOwnerHeaders(),
                     body: JSON.stringify({ picture: compressedPic })
                 });
+                const resData = await res.json().catch(() => ({}));
                 if (res.ok) {
                     try {
                         localStorage.setItem(CACHE_PROFILE_KEY, compressedPic);
@@ -434,8 +467,9 @@
                     setTimeout(() => setSyncBadge(false), 2500);
                 } else {
                     document.getElementById("header-profile-img").src = previousPic;
-                    setSyncBadge(true, "Unauthorized or failed to save", true);
-                    alert("Unauthorized or failed to save profile picture.");
+                    const errMsg = resData.error || `HTTP ${res.status}`;
+                    setSyncBadge(true, `Failed (${errMsg})`, true);
+                    alert(`Could not save profile picture (${errMsg}). Please check your Owner Login Code.`);
                 }
             } catch (err) {
                 setSyncBadge(true, "Error saving profile picture", true);
@@ -517,6 +551,11 @@
 
         // Add New Product IMMEDIATELY on click, with fast photo compression + background online sync
         async function addNewProduct() {
+            if (!ownerKey) {
+                toggleOwnerMode();
+                if (!ownerKey) return;
+            }
+
             const nameInput = document.getElementById("new-prod-name");
             const descInput = document.getElementById("new-prod-desc");
             const fileInput = document.getElementById("new-prod-image");
@@ -553,7 +592,6 @@
                 }
             }
 
-            // 1. Add immediately to store UI & local cache without waiting for network
             const newProduct = { 
                 name, 
                 category, 
@@ -568,22 +606,18 @@
             } catch (err) {}
             renderProducts();
 
-            // Clear inputs immediately so you can keep adding products right away
             nameInput.value = "";
             descInput.value = "";
             fileInput.value = "";
             setSyncBadge(true, "✓ Added! Syncing online...");
 
-            // 2. Sync to Netlify online database in the background
             try {
                 const res = await fetch("/.netlify/functions/products", {
                     method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "x-profile-upload-key": ownerKey
-                    },
+                    headers: getOwnerHeaders(),
                     body: JSON.stringify({ products })
                 });
+                const resData = await res.json().catch(() => ({}));
                 if (res.ok) {
                     setSyncBadge(true, "✓ Saved online for all customers");
                     setTimeout(() => setSyncBadge(false), 2500);
@@ -593,10 +627,16 @@
                         localStorage.setItem(CACHE_PRODUCTS_KEY, JSON.stringify(products));
                     } catch (err) {}
                     renderProducts();
-                    setSyncBadge(true, "Unauthorized - product reverted", true);
-                    alert("Unauthorized or failed to save online. Please check your Owner Login Code.");
+                    const detail = resData.error || `HTTP ${res.status}`;
+                    setSyncBadge(true, `Failed (${detail})`, true);
+                    alert(`Failed to save online (${detail}). Please log out of Owner Mode and re-enter your Owner Login Code.`);
                 }
             } catch (e) {
+                products.pop();
+                try {
+                    localStorage.setItem(CACHE_PRODUCTS_KEY, JSON.stringify(products));
+                } catch (err) {}
+                renderProducts();
                 setSyncBadge(true, "Network error saving online", true);
                 alert("Network error communicating with online server. Please check your internet connection.");
             }
@@ -616,16 +656,19 @@
             try {
                 const res = await fetch("/.netlify/functions/products", {
                     method: "PUT",
-                    headers: { "Content-Type": "application/json", "x-profile-upload-key": ownerKey },
+                    headers: getOwnerHeaders(),
                     body: JSON.stringify({ products })
                 });
+                const resData = await res.json().catch(() => ({}));
                 if (res.ok) {
                     setSyncBadge(true, "✓ Deleted online");
                     setTimeout(() => setSyncBadge(false), 2000);
                 } else {
                     products = backup;
                     renderProducts();
-                    setSyncBadge(true, "Unauthorized to delete", true);
+                    const detail = resData.error || `HTTP ${res.status}`;
+                    setSyncBadge(true, `Failed (${detail})`, true);
+                    alert(`Could not delete online (${detail}).`);
                 }
             } catch (e) {
                 products = backup;
