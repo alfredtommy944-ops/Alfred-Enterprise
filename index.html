@@ -206,12 +206,27 @@
 
         <!-- Store Section -->
         <section id="store-section" class="space-y-4">
+            <!-- Dynamic New Products Notification Banner -->
+            <div id="new-products-banner" class="hidden bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-100 border border-amber-600/45 rounded-2xl p-3.5 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-start sm:items-center gap-2.5">
+                    <span class="text-lg leading-none">🆕</span>
+                    <div>
+                        <p id="new-products-banner-title" class="text-xs sm:text-sm font-extrabold text-amber-950">New products have been added!</p>
+                        <p id="new-products-banner-sub" class="text-[11px] text-amber-800">Check out the latest items available at Alfred Enterprise.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 self-end sm:self-center">
+                    <a href="#products-grid" onclick="dismissNewProductsBanner()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs transition">View Items</a>
+                    <button type="button" onclick="dismissNewProductsBanner()" aria-label="Dismiss new products notification" class="text-amber-900 hover:bg-amber-200/70 px-2 py-1 rounded-lg text-xs font-bold">✕</button>
+                </div>
+            </div>
+
             <div class="flex justify-between items-center border-b border-amber-600/25 pb-2">
                 <h3 class="text-xl font-bold luxury-gold-title pl-2">Available Products</h3>
                 <span id="product-count" class="text-xs text-slate-500 font-medium">Loading items...</span>
             </div>
 
-            <!-- Category Filter Bar & Instant Search Box -->
+            <!-- Category Filter Bar, Instant Search Box & Price Sort -->
             <div class="bg-white border border-amber-600/25 rounded-2xl p-4 shadow-sm space-y-3">
                 <div class="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
                     <div class="relative flex-1">
@@ -227,12 +242,22 @@
                             type="button"
                             id="clear-search-btn"
                             onclick="resetProductFilters()"
-                            title="Clear search and category filter"
+                            title="Clear search, sort, and category filter"
                             class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs font-bold px-1.5 py-0.5 rounded"
                         >
                             ✕
                         </button>
                     </div>
+                    <select
+                        id="product-sort-select"
+                        onchange="handleSortChange(this.value)"
+                        aria-label="Sort products by price"
+                        class="bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-900 font-medium outline-none transition"
+                    >
+                        <option value="default">Sort: Default</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
+                    </select>
                 </div>
                 <div id="category-filter-bar" class="flex flex-wrap gap-2">
                     <!-- Category Filter Pills Injected Here -->
@@ -328,6 +353,7 @@
         const CACHE_PRODUCTS_KEY = "alfred_ent_cached_products_v1";
         const CACHE_PROFILE_KEY = "alfred_ent_cached_profile_v1";
         const SESSION_OWNER_KEY = "alfred_ent_owner_key_v1";
+        const SEEN_PRODUCTS_KEY = "alfred_ent_seen_products_v1";
         const DEFAULT_CATEGORIES = ["Lighting & Power", "Electronics", "Digital Services", "Hardware"];
         const FALLBACK_PRODUCT_IMG = "data:image/svg+xml;utf8," + encodeURIComponent(
             `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="160" viewBox="0 0 300 160">
@@ -342,6 +368,7 @@
         let selectedProductImageData = "";
         let activeCategory = "All";
         let searchQuery = "";
+        let sortOrder = "default";
 
         try {
             ownerKey = (sessionStorage.getItem(SESSION_OWNER_KEY) || "").trim();
@@ -354,6 +381,61 @@
                 "x-profile-upload-key": cleanKey,
                 "x-owner-upload-key": cleanKey
             };
+        }
+
+        function getProductSignature(p) {
+            const sizesPart = Array.isArray(p.sizes)
+                ? p.sizes.map(s => `${s.name || ""}:${s.price || ""}`).join("|")
+                : `${p.price || 0}`;
+            return `${(p.name || "").trim().toLowerCase()}::${(p.category || "").trim().toLowerCase()}::${sizesPart}`;
+        }
+
+        function evaluateNewProductsBanner() {
+            const banner = document.getElementById("new-products-banner");
+            const titleEl = document.getElementById("new-products-banner-title");
+            const subEl = document.getElementById("new-products-banner-sub");
+            if (!banner || !Array.isArray(products) || products.length === 0) return;
+
+            try {
+                const rawSeen = localStorage.getItem(SEEN_PRODUCTS_KEY);
+                const currentSigs = products.map(getProductSignature);
+
+                if (!rawSeen) {
+                    localStorage.setItem(SEEN_PRODUCTS_KEY, JSON.stringify(currentSigs));
+                    return;
+                }
+
+                const seenSigs = JSON.parse(rawSeen);
+                if (!Array.isArray(seenSigs)) {
+                    localStorage.setItem(SEEN_PRODUCTS_KEY, JSON.stringify(currentSigs));
+                    return;
+                }
+
+                const seenSet = new Set(seenSigs);
+                const brandNew = products.filter(p => !seenSet.has(getProductSignature(p)));
+
+                if (brandNew.length > 0) {
+                    if (titleEl) {
+                        titleEl.innerText = brandNew.length === 1
+                            ? `New product added: ${brandNew[0].name}!`
+                            : `${brandNew.length} new products have been added!`;
+                    }
+                    if (subEl) {
+                        const namesPreview = brandNew.slice(0, 3).map(p => p.name).join(", ");
+                        subEl.innerText = `Newly available: ${namesPreview}${brandNew.length > 3 ? "..." : ""}`;
+                    }
+                    banner.classList.remove("hidden");
+                }
+            } catch (e) {}
+        }
+
+        function dismissNewProductsBanner() {
+            const banner = document.getElementById("new-products-banner");
+            if (banner) banner.classList.add("hidden");
+            try {
+                const currentSigs = products.map(getProductSignature);
+                localStorage.setItem(SEEN_PRODUCTS_KEY, JSON.stringify(currentSigs));
+            } catch (e) {}
         }
 
         function clearSelectedProductPhoto() {
@@ -407,6 +489,7 @@
                     if (Array.isArray(parsed) && parsed.length > 0) {
                         products = parsed;
                         renderProducts();
+                        evaluateNewProductsBanner();
                     }
                 }
             } catch (e) {}
@@ -579,6 +662,7 @@
                         localStorage.setItem(CACHE_PRODUCTS_KEY, JSON.stringify(products));
                     } catch (e) {}
                     renderProducts();
+                    evaluateNewProductsBanner();
                 }
             } catch (e) {
                 console.error("Failed to load products", e);
@@ -627,10 +711,16 @@
             renderProducts();
         }
 
+        function handleSortChange(value) {
+            sortOrder = value || "default";
+            updateClearButtonVisibility();
+            renderProducts();
+        }
+
         function updateClearButtonVisibility() {
             const clearBtn = document.getElementById("clear-search-btn");
             if (!clearBtn) return;
-            if (searchQuery || activeCategory !== "All") {
+            if (searchQuery || activeCategory !== "All" || sortOrder !== "default") {
                 clearBtn.classList.remove("hidden");
             } else {
                 clearBtn.classList.add("hidden");
@@ -640,14 +730,43 @@
         function resetProductFilters() {
             activeCategory = "All";
             searchQuery = "";
+            sortOrder = "default";
             const input = document.getElementById("product-search-input");
             if (input) input.value = "";
+            const sortSelect = document.getElementById("product-sort-select");
+            if (sortSelect) sortSelect.value = "default";
             renderCategoryFilterBar();
             updateClearButtonVisibility();
             renderProducts();
         }
 
-        // Render Products Grid with Multiple Sizes/Watts Dropdown + Category/Search Filtering
+        function getActiveProductPrice(p, index) {
+            const sizes = (p.sizes && p.sizes.length > 0) ? p.sizes : [{ name: 'Standard', price: p.price || 0 }];
+            const select = document.getElementById(`size-select-${index}`);
+            const selectedIdx = select ? parseInt(select.value, 10) : 0;
+            const chosen = sizes[selectedIdx] || sizes[0];
+            return parseFloat(chosen.price || 0);
+        }
+
+        // One-tap WhatsApp order for a single product card using its selected size/wattage
+        function orderProductWhatsApp(index) {
+            const prod = products[index];
+            if (!prod) return;
+            const sizes = (prod.sizes && prod.sizes.length > 0) ? prod.sizes : [{ name: 'Standard', price: prod.price || 0 }];
+            const select = document.getElementById(`size-select-${index}`);
+            const selectedIdx = select ? parseInt(select.value, 10) : 0;
+            const chosenSize = sizes[selectedIdx] || sizes[0];
+
+            let text = `Hello Alfred Enterprise, I want to order:%0A%0A`;
+            text += `🛒 *Item:* ${prod.name}%0A`;
+            text += `📐 *Option:* ${chosenSize.name}%0A`;
+            text += `💰 *Price:* NLe ${chosenSize.price}%0A%0A`;
+            text += `Please confirm availability and delivery details.`;
+
+            window.open(`https://wa.me/23276655025?text=${text}`, '_blank');
+        }
+
+        // Render Products Grid with Multiple Sizes/Watts Dropdown + Category/Search/Sort + Quick WhatsApp
         function renderProducts() {
             renderCategoryFilterBar();
             updateClearButtonVisibility();
@@ -661,7 +780,7 @@
                 return;
             }
 
-            const matchedEntries = products
+            let matchedEntries = products
                 .map((p, index) => ({ p, index }))
                 .filter(({ p }) => {
                     const catMatch = activeCategory === "All" || (p.category || "") === activeCategory;
@@ -673,6 +792,15 @@
                     const haystack = `${p.name || ""} ${p.category || ""} ${p.description || ""} ${sizesText}`.toLowerCase();
                     return haystack.includes(searchQuery);
                 });
+
+            if (sortOrder === "price-asc" || sortOrder === "price-desc") {
+                const direction = sortOrder === "price-asc" ? 1 : -1;
+                matchedEntries = [...matchedEntries].sort((a, b) => {
+                    const priceA = getActiveProductPrice(a.p, a.index);
+                    const priceB = getActiveProductPrice(b.p, b.index);
+                    return (priceA - priceB) * direction;
+                });
+            }
 
             countEl.innerText = `${matchedEntries.length} of ${products.length} items shown`;
 
@@ -713,12 +841,17 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="p-4 pt-3 flex justify-between items-center border-t border-slate-100 mt-2">
-                            <span id="price-display-${index}" class="font-extrabold text-amber-700">NLe ${sizes[0].price}</span>
-                            <div class="flex gap-2">
-                                <button onclick="addToCart(${index})" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs">Add to Cart</button>
-                                ${ownerKey ? `<button onclick="deleteProduct(${index})" class="bg-red-600 hover:bg-red-500 px-2 py-1.5 rounded-lg text-xs text-white">Delete</button>` : ''}
+                        <div class="p-4 pt-3 space-y-2.5 border-t border-slate-100 mt-2">
+                            <div class="flex justify-between items-center">
+                                <span id="price-display-${index}" class="font-extrabold text-amber-700">NLe ${sizes[0].price}</span>
+                                <div class="flex gap-2">
+                                    <button onclick="addToCart(${index})" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs">Add to Cart</button>
+                                    ${ownerKey ? `<button onclick="deleteProduct(${index})" class="bg-red-600 hover:bg-red-500 px-2 py-1.5 rounded-lg text-xs text-white">Delete</button>` : ''}
+                                </div>
                             </div>
+                            <button type="button" onclick="orderProductWhatsApp(${index})" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-1.5 rounded-lg text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition">
+                                📲 Order via WhatsApp
+                            </button>
                         </div>
                     </div>
                 `;
@@ -733,6 +866,9 @@
             let sizes = p.sizes && p.sizes.length > 0 ? p.sizes : [{ name: 'Standard', price: p.price || 0 }];
             const chosenSize = sizes[selectedIdx];
             document.getElementById(`price-display-${index}`).innerText = `NLe ${chosenSize.price}`;
+            if (sortOrder === "price-asc" || sortOrder === "price-desc") {
+                renderProducts();
+            }
         }
 
         // Add New Product with pre-captured gallery photo + online sync
@@ -789,6 +925,7 @@
             products.push(newProduct);
             try {
                 localStorage.setItem(CACHE_PRODUCTS_KEY, JSON.stringify(products));
+                localStorage.setItem(SEEN_PRODUCTS_KEY, JSON.stringify(products.map(getProductSignature)));
             } catch (err) {}
             renderProducts();
             setSyncBadge(true, "✓ Added! Syncing online...");
@@ -834,6 +971,7 @@
             products.splice(index, 1);
             try {
                 localStorage.setItem(CACHE_PRODUCTS_KEY, JSON.stringify(products));
+                localStorage.setItem(SEEN_PRODUCTS_KEY, JSON.stringify(products.map(getProductSignature)));
             } catch (err) {}
             renderProducts();
             setSyncBadge(true, "Deleting online...");
