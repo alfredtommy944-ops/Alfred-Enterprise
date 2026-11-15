@@ -84,8 +84,35 @@
 </head>
 <body class="bg-white text-slate-900 min-h-screen font-sans pb-20">
 
+    <!-- Phone-Style Pop-Up Notification Dialog for New Product Drops -->
+    <div id="new-drop-popup" class="fixed inset-x-0 top-4 z-50 px-4 hidden pointer-events-none">
+        <div class="max-w-md mx-auto bg-white border-2 border-amber-600 rounded-2xl p-4 shadow-2xl pointer-events-auto space-y-3">
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-9 h-9 rounded-full bg-amber-100 border border-amber-600/30 flex items-center justify-center text-lg shrink-0">🔔</span>
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-amber-700">Alfred Enterprise Alert</p>
+                        <h4 id="new-drop-popup-title" class="text-sm font-extrabold text-slate-900">New products have been dropped!</h4>
+                    </div>
+                </div>
+                <button type="button" onclick="dismissNewProductsBanner()" aria-label="Close pop-up notification" class="text-slate-400 hover:text-slate-800 font-bold text-base leading-none px-1">✕</button>
+            </div>
+            <p id="new-drop-popup-body" class="text-xs text-slate-700 leading-relaxed">
+                Fresh electronics and items are now available. Tap below to view them.
+            </p>
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+                <a href="#store-section" onclick="dismissNewProductsBanner()" class="flex-1 text-center bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition">
+                    View New Products
+                </a>
+                <button type="button" id="enable-phone-alerts-btn" onclick="enablePhoneNotifications()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-xs transition">
+                    📱 Phone Alert
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Header & Business Profile -->
-    <header class="bg-white/95 border-b border-amber-600/25 p-4 sticky top-0 z-50 backdrop-blur shadow-sm">
+    <header class="bg-white/95 border-b border-amber-600/25 p-4 sticky top-0 z-40 backdrop-blur shadow-sm">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
                 <img id="header-profile-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Business Owner" decoding="async" fetchpriority="high" class="w-12 h-12 rounded-full object-cover border-2 border-amber-600 shadow">
@@ -94,7 +121,10 @@
                     <p class="text-xs text-slate-600 font-medium">IDA, Kenema City, Sierra Leone | +23276655025</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2.5 flex-wrap justify-center">
+                <button type="button" id="header-phone-alert-btn" onclick="enablePhoneNotifications()" class="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-600/35 px-3 py-2 rounded-lg font-bold text-xs transition">
+                    🔔 Alerts
+                </button>
                 <button onclick="toggleCartModal()" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow transition">
                     🛒 Cart <span id="cart-count" class="bg-white text-amber-800 px-2 py-0.5 rounded-full text-xs font-extrabold">0</span>
                 </button>
@@ -411,6 +441,7 @@
         const CACHE_PROFILE_KEY = "alfred_ent_cached_profile_v1";
         const SESSION_OWNER_KEY = "alfred_ent_owner_key_v1";
         const SEEN_PRODUCTS_KEY = "alfred_ent_seen_products_v1";
+        const NOTIFIED_DROP_SIG_KEY = "alfred_ent_notified_drop_sig_v1";
         const DEFAULT_CATEGORIES = ["Lighting & Power", "Electronics", "Digital Services", "Hardware"];
         const FALLBACK_PRODUCT_IMG = "data:image/svg+xml;utf8," + encodeURIComponent(
             `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="160" viewBox="0 0 300 160">
@@ -448,6 +479,104 @@
             return `${(p.name || "").trim().toLowerCase()}::${(p.category || "").trim().toLowerCase()}::${sizesPart}`;
         }
 
+        function updatePhoneAlertButtonState() {
+            const btns = [
+                document.getElementById("enable-phone-alerts-btn"),
+                document.getElementById("header-phone-alert-btn")
+            ];
+            if (!("Notification" in window)) {
+                btns.forEach(btn => {
+                    if (btn) btn.classList.add("hidden");
+                });
+                return;
+            }
+            const perm = Notification.permission;
+            btns.forEach(btn => {
+                if (!btn) return;
+                if (perm === "granted") {
+                    btn.innerText = "✓ Phone Alerts On";
+                } else if (perm === "denied") {
+                    btn.innerText = "🔔 In-App Alert";
+                }
+            });
+        }
+
+        async function triggerSystemPhoneNotification(title, body) {
+            if (!("Notification" in window) || Notification.permission !== "granted") return;
+            try {
+                if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+                    const reg = await navigator.serviceWorker.ready;
+                    if (reg && reg.showNotification) {
+                        await reg.showNotification(title, {
+                            body,
+                            icon: "/icons/icon-192.jpg?v=2",
+                            badge: "/icons/icon-192.jpg?v=2",
+                            tag: "alfred-enterprise-new-drop",
+                            renotify: true,
+                            data: { url: "/#store-section" }
+                        });
+                        return;
+                    }
+                }
+                new Notification(title, {
+                    body,
+                    icon: "/icons/icon-192.jpg?v=2",
+                    tag: "alfred-enterprise-new-drop"
+                });
+            } catch (e) {}
+        }
+
+        async function enablePhoneNotifications() {
+            if (!("Notification" in window)) {
+                showNewDropPopup("New products have been dropped!", "Check out the latest items now available at Alfred Enterprise.");
+                return;
+            }
+            if (Notification.permission === "granted") {
+                await triggerSystemPhoneNotification(
+                    "Alfred Enterprise — Phone Alerts Active",
+                    "You will get a phone pop-up whenever new products are dropped."
+                );
+                updatePhoneAlertButtonState();
+                return;
+            }
+            if (Notification.permission === "denied") {
+                alert("Phone notifications are blocked in your browser settings. The on-screen pop-up alert will still show whenever new products are dropped.");
+                updatePhoneAlertButtonState();
+                return;
+            }
+            try {
+                const permission = await Notification.requestPermission();
+                updatePhoneAlertButtonState();
+                if (permission === "granted") {
+                    await triggerSystemPhoneNotification(
+                        "Alfred Enterprise — Phone Alerts Enabled",
+                        "You will now get phone pop-up notifications when new products drop."
+                    );
+                }
+            } catch (e) {}
+        }
+
+        function showNewDropPopup(title, body, dropSignature = "") {
+            const popup = document.getElementById("new-drop-popup");
+            const popupTitle = document.getElementById("new-drop-popup-title");
+            const popupBody = document.getElementById("new-drop-popup-body");
+            if (popupTitle) popupTitle.innerText = title;
+            if (popupBody) popupBody.innerText = body;
+            if (popup) popup.classList.remove("hidden");
+
+            if (dropSignature) {
+                try {
+                    const alreadyNotified = localStorage.getItem(NOTIFIED_DROP_SIG_KEY);
+                    if (alreadyNotified !== dropSignature) {
+                        localStorage.setItem(NOTIFIED_DROP_SIG_KEY, dropSignature);
+                        triggerSystemPhoneNotification(title, body);
+                    }
+                } catch (e) {
+                    triggerSystemPhoneNotification(title, body);
+                }
+            }
+        }
+
         function evaluateNewProductsBanner() {
             const banner = document.getElementById("new-products-banner");
             const titleEl = document.getElementById("new-products-banner-title");
@@ -473,23 +602,31 @@
                 const brandNew = products.filter(p => !seenSet.has(getProductSignature(p)));
 
                 if (brandNew.length > 0) {
+                    const namesPreview = brandNew.slice(0, 3).map(p => p.name).join(", ");
+                    const popupTitle = brandNew.length === 1
+                        ? `New Drop: ${brandNew[0].name}!`
+                        : `${brandNew.length} New Products Dropped!`;
+                    const popupBody = `Newly available at Alfred Enterprise: ${namesPreview}${brandNew.length > 3 ? "..." : ""}`;
+
                     if (titleEl) {
                         titleEl.innerText = brandNew.length === 1
                             ? `New product added: ${brandNew[0].name}!`
                             : `${brandNew.length} new products have been added!`;
                     }
                     if (subEl) {
-                        const namesPreview = brandNew.slice(0, 3).map(p => p.name).join(", ");
-                        subEl.innerText = `Newly available: ${namesPreview}${brandNew.length > 3 ? "..." : ""}`;
+                        subEl.innerText = popupBody;
                     }
                     banner.classList.remove("hidden");
+                    showNewDropPopup(popupTitle, popupBody, brandNew.map(getProductSignature).join("||"));
                 }
             } catch (e) {}
         }
 
         function dismissNewProductsBanner() {
             const banner = document.getElementById("new-products-banner");
+            const popup = document.getElementById("new-drop-popup");
             if (banner) banner.classList.add("hidden");
+            if (popup) popup.classList.add("hidden");
             try {
                 const currentSigs = products.map(getProductSignature);
                 localStorage.setItem(SEEN_PRODUCTS_KEY, JSON.stringify(currentSigs));
@@ -509,6 +646,7 @@
         // Capture & compress the gallery photo immediately when chosen so it cannot disappear later
         document.addEventListener("DOMContentLoaded", () => {
             renderCategoryFilterBar();
+            updatePhoneAlertButtonState();
             const prodFileInput = document.getElementById("new-prod-image");
             if (prodFileInput) {
                 prodFileInput.addEventListener("change", async (e) => {
