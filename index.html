@@ -210,6 +210,35 @@
                 <h3 class="text-xl font-bold luxury-gold-title pl-2">Available Products</h3>
                 <span id="product-count" class="text-xs text-slate-500 font-medium">Loading items...</span>
             </div>
+
+            <!-- Category Filter Bar & Instant Search Box -->
+            <div class="bg-white border border-amber-600/25 rounded-2xl p-4 shadow-sm space-y-3">
+                <div class="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
+                    <div class="relative flex-1">
+                        <input
+                            type="search"
+                            id="product-search-input"
+                            oninput="handleSearchInput(this.value)"
+                            placeholder="Search products by name, watt, or category..."
+                            aria-label="Search products"
+                            class="w-full bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-xl pl-3.5 pr-9 py-2 text-xs sm:text-sm text-slate-900 outline-none transition"
+                        >
+                        <button
+                            type="button"
+                            id="clear-search-btn"
+                            onclick="resetProductFilters()"
+                            title="Clear search and category filter"
+                            class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs font-bold px-1.5 py-0.5 rounded"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                </div>
+                <div id="category-filter-bar" class="flex flex-wrap gap-2">
+                    <!-- Category Filter Pills Injected Here -->
+                </div>
+            </div>
+
             <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 <!-- Dynamic Products Injected Here -->
             </div>
@@ -299,6 +328,7 @@
         const CACHE_PRODUCTS_KEY = "alfred_ent_cached_products_v1";
         const CACHE_PROFILE_KEY = "alfred_ent_cached_profile_v1";
         const SESSION_OWNER_KEY = "alfred_ent_owner_key_v1";
+        const DEFAULT_CATEGORIES = ["Lighting & Power", "Electronics", "Digital Services", "Hardware"];
         const FALLBACK_PRODUCT_IMG = "data:image/svg+xml;utf8," + encodeURIComponent(
             `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="160" viewBox="0 0 300 160">
                 <rect width="300" height="160" fill="#fef3c7"/>
@@ -310,6 +340,8 @@
         let cart = [];
         let ownerKey = "";
         let selectedProductImageData = "";
+        let activeCategory = "All";
+        let searchQuery = "";
 
         try {
             ownerKey = (sessionStorage.getItem(SESSION_OWNER_KEY) || "").trim();
@@ -336,6 +368,7 @@
 
         // Capture & compress the gallery photo immediately when chosen so it cannot disappear later
         document.addEventListener("DOMContentLoaded", () => {
+            renderCategoryFilterBar();
             const prodFileInput = document.getElementById("new-prod-image");
             if (prodFileInput) {
                 prodFileInput.addEventListener("change", async (e) => {
@@ -555,15 +588,107 @@
             }
         }
 
-        // Render Products Grid with Multiple Sizes/Watts Dropdown
+        // Render Category Filter Pills
+        function renderCategoryFilterBar() {
+            const bar = document.getElementById("category-filter-bar");
+            if (!bar) return;
+            const dynamicCategories = products
+                .map(p => (p && p.category ? String(p.category).trim() : ""))
+                .filter(Boolean);
+            const allCategories = ["All", ...new Set([...DEFAULT_CATEGORIES, ...dynamicCategories])];
+
+            bar.innerHTML = allCategories.map(cat => {
+                const isActive = activeCategory === cat;
+                const activeClasses = isActive
+                    ? "bg-amber-600 text-white border-amber-600 shadow-xs"
+                    : "bg-amber-50/70 text-amber-900 border-amber-600/30 hover:bg-amber-100";
+                return `
+                    <button
+                        type="button"
+                        onclick="selectCategory('${cat.replace(/'/g, "\\'")}')"
+                        class="px-3 py-1.5 rounded-full text-xs font-bold border transition ${activeClasses}"
+                    >
+                        ${cat}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectCategory(category) {
+            activeCategory = category || "All";
+            renderCategoryFilterBar();
+            updateClearButtonVisibility();
+            renderProducts();
+        }
+
+        function handleSearchInput(value) {
+            searchQuery = (value || "").trim().toLowerCase();
+            updateClearButtonVisibility();
+            renderProducts();
+        }
+
+        function updateClearButtonVisibility() {
+            const clearBtn = document.getElementById("clear-search-btn");
+            if (!clearBtn) return;
+            if (searchQuery || activeCategory !== "All") {
+                clearBtn.classList.remove("hidden");
+            } else {
+                clearBtn.classList.add("hidden");
+            }
+        }
+
+        function resetProductFilters() {
+            activeCategory = "All";
+            searchQuery = "";
+            const input = document.getElementById("product-search-input");
+            if (input) input.value = "";
+            renderCategoryFilterBar();
+            updateClearButtonVisibility();
+            renderProducts();
+        }
+
+        // Render Products Grid with Multiple Sizes/Watts Dropdown + Category/Search Filtering
         function renderProducts() {
+            renderCategoryFilterBar();
+            updateClearButtonVisibility();
+
             const grid = document.getElementById("products-grid");
-            document.getElementById("product-count").innerText = `${products.length} items available`;
+            const countEl = document.getElementById("product-count");
+
             if (products.length === 0) {
+                countEl.innerText = "0 items available";
                 grid.innerHTML = `<p class="text-xs text-slate-500 col-span-full text-center py-6">No products found online yet. Use Owner Mode to add products.</p>`;
                 return;
             }
-            grid.innerHTML = products.map((p, index) => {
+
+            const matchedEntries = products
+                .map((p, index) => ({ p, index }))
+                .filter(({ p }) => {
+                    const catMatch = activeCategory === "All" || (p.category || "") === activeCategory;
+                    if (!catMatch) return false;
+                    if (!searchQuery) return true;
+                    const sizesText = Array.isArray(p.sizes)
+                        ? p.sizes.map(s => `${s.name || ""} ${s.price || ""}`).join(" ")
+                        : "";
+                    const haystack = `${p.name || ""} ${p.category || ""} ${p.description || ""} ${sizesText}`.toLowerCase();
+                    return haystack.includes(searchQuery);
+                });
+
+            countEl.innerText = `${matchedEntries.length} of ${products.length} items shown`;
+
+            if (matchedEntries.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-8 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                        <p class="text-sm font-semibold text-slate-700">No matching products found.</p>
+                        <button type="button" onclick="resetProductFilters()" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-bold shadow">
+                            Show All Products
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = matchedEntries.map(({ p, index }) => {
                 let sizes = p.sizes;
                 if (!sizes || sizes.length === 0) {
                     sizes = [{ name: 'Standard', price: p.price || 0 }];
