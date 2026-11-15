@@ -108,8 +108,18 @@
     <!-- Main Content Container -->
     <main class="max-w-6xl mx-auto p-4 space-y-8 mt-4">
 
-        <!-- Shop Storefront Photo -->
-        <section class="luxury-card p-3 sm:p-4 overflow-hidden">
+        <!-- Shop Storefront Photo + Free Urgent Delivery Message Above Image -->
+        <section class="luxury-card p-4 sm:p-5 overflow-hidden space-y-3">
+            <div class="bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-100 border border-amber-600/35 rounded-xl p-3.5 text-center shadow-2xs space-y-1">
+                <p class="text-xs sm:text-sm font-extrabold text-amber-950">
+                    🚚 Free Urgent Delivery Around Kenema (Especially IDA Community)!
+                </p>
+                <p class="text-xs sm:text-sm text-slate-800 leading-relaxed">
+                    Whenever you are in urgent need around Kenema, especially in the IDA community, you do not need to walk to our shop—just call
+                    <a href="tel:+23276655025" class="font-bold text-amber-800 underline">+23276655025</a>
+                    or send your order via WhatsApp, and we will bring the exact product right to where you are staying.
+                </p>
+            </div>
             <img src="store-front.jpg" alt="Alfred Enterprise Storefront at IDA, Kenema City" decoding="async" fetchpriority="high" class="w-full h-auto rounded-xl object-cover block">
         </section>
 
@@ -297,6 +307,52 @@
 
     </main>
 
+    <!-- Single-Product Quick WhatsApp Customer Details Modal -->
+    <div id="quick-order-modal" class="fixed inset-0 bg-slate-900/50 hidden z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white border border-amber-600/30 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                <h3 class="text-lg font-bold luxury-gold-title">Customer Details for WhatsApp Order</h3>
+                <button type="button" onclick="closeQuickOrderModal()" class="text-slate-500 hover:text-slate-900 font-bold text-lg">✕</button>
+            </div>
+
+            <div id="quick-order-summary" class="bg-amber-50/80 border border-amber-600/25 rounded-xl p-3 text-xs text-slate-800 space-y-1">
+                <p class="font-bold text-amber-950" id="quick-order-item-name">Item</p>
+                <p id="quick-order-item-option" class="text-slate-700">Option: Standard — NLe 0</p>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[11px] text-slate-600 font-semibold mb-1">Full Name *</label>
+                    <input type="text" id="quick-cust-name" placeholder="e.g. Mohamed Brima" class="w-full bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-lg p-2.5 text-xs text-slate-900 outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-600 font-semibold mb-1">Phone Number *</label>
+                    <input type="tel" id="quick-cust-phone" placeholder="e.g. +23276XXXXXX" class="w-full bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-lg p-2.5 text-xs text-slate-900 outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-600 font-semibold mb-1">Customer Address / Delivery Location *</label>
+                    <input type="text" id="quick-cust-location" placeholder="e.g. IDA, Kenema City" class="w-full bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-lg p-2.5 text-xs text-slate-900 outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-600 font-semibold mb-1">Payment Method *</label>
+                    <select id="quick-cust-payment" class="w-full bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-lg p-2.5 text-xs text-slate-900 outline-none">
+                        <option value="Orange Money">Orange Money</option>
+                        <option value="QMoney">QMoney</option>
+                        <option value="AfriMoney">AfriMoney</option>
+                        <option value="Cash on Delivery">Cash on Delivery</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-2.5 pt-2">
+                <button type="button" onclick="closeQuickOrderModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl font-bold text-xs transition">Cancel</button>
+                <button type="button" onclick="submitQuickOrderWhatsApp()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition">
+                    📲 Continue to WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Shopping Cart Modal -->
     <div id="cart-modal" class="fixed inset-0 bg-slate-900/50 hidden z-50 flex justify-end backdrop-blur-xs">
         <div class="bg-white border-l border-amber-600/25 w-full max-w-md h-full p-6 flex flex-col justify-between shadow-2xl overflow-y-auto">
@@ -329,6 +385,7 @@
                         <label class="block text-[11px] text-slate-600 font-medium mb-1">Payment Method</label>
                         <select id="cust-payment" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900">
                             <option value="Orange Money">Orange Money</option>
+                            <option value="QMoney">QMoney</option>
                             <option value="AfriMoney">AfriMoney</option>
                             <option value="Cash on Delivery">Cash on Delivery</option>
                         </select>
@@ -369,6 +426,7 @@
         let activeCategory = "All";
         let searchQuery = "";
         let sortOrder = "default";
+        let pendingQuickOrderIndex = null;
 
         try {
             ownerKey = (sessionStorage.getItem(SESSION_OWNER_KEY) || "").trim();
@@ -748,21 +806,87 @@
             return parseFloat(chosen.price || 0);
         }
 
-        // One-tap WhatsApp order for a single product card using its selected size/wattage
+        // Open Customer Details Modal before sending single-product WhatsApp order
         function orderProductWhatsApp(index) {
             const prod = products[index];
             if (!prod) return;
+            pendingQuickOrderIndex = index;
+
             const sizes = (prod.sizes && prod.sizes.length > 0) ? prod.sizes : [{ name: 'Standard', price: prod.price || 0 }];
             const select = document.getElementById(`size-select-${index}`);
             const selectedIdx = select ? parseInt(select.value, 10) : 0;
             const chosenSize = sizes[selectedIdx] || sizes[0];
 
-            let text = `Hello Alfred Enterprise, I want to order:%0A%0A`;
-            text += `🛒 *Item:* ${prod.name}%0A`;
-            text += `📐 *Option:* ${chosenSize.name}%0A`;
-            text += `💰 *Price:* NLe ${chosenSize.price}%0A%0A`;
-            text += `Please confirm availability and delivery details.`;
+            const itemNameEl = document.getElementById("quick-order-item-name");
+            const itemOptionEl = document.getElementById("quick-order-item-option");
+            if (itemNameEl) itemNameEl.innerText = prod.name;
+            if (itemOptionEl) itemOptionEl.innerText = `Option: ${chosenSize.name} — NLe ${chosenSize.price}`;
 
+            const cartName = (document.getElementById("cust-name") || {}).value || "";
+            const cartPhone = (document.getElementById("cust-phone") || {}).value || "";
+            const cartLoc = (document.getElementById("cust-location") || {}).value || "";
+            const cartPay = (document.getElementById("cust-payment") || {}).value || "Orange Money";
+
+            const qName = document.getElementById("quick-cust-name");
+            const qPhone = document.getElementById("quick-cust-phone");
+            const qLoc = document.getElementById("quick-cust-location");
+            const qPay = document.getElementById("quick-cust-payment");
+
+            if (qName && !qName.value.trim() && cartName.trim()) qName.value = cartName.trim();
+            if (qPhone && !qPhone.value.trim() && cartPhone.trim()) qPhone.value = cartPhone.trim();
+            if (qLoc && !qLoc.value.trim() && cartLoc.trim()) qLoc.value = cartLoc.trim();
+            if (qPay) qPay.value = cartPay;
+
+            const modal = document.getElementById("quick-order-modal");
+            if (modal) modal.classList.remove("hidden");
+        }
+
+        function closeQuickOrderModal() {
+            pendingQuickOrderIndex = null;
+            const modal = document.getElementById("quick-order-modal");
+            if (modal) modal.classList.add("hidden");
+        }
+
+        function submitQuickOrderWhatsApp() {
+            if (pendingQuickOrderIndex === null) return;
+            const prod = products[pendingQuickOrderIndex];
+            if (!prod) return;
+
+            const name = document.getElementById("quick-cust-name").value.trim();
+            const phone = document.getElementById("quick-cust-phone").value.trim();
+            const location = document.getElementById("quick-cust-location").value.trim();
+            const payment = document.getElementById("quick-cust-payment").value;
+
+            if (!name || !phone || !location) {
+                alert("Please fill in your Full Name, Phone Number, and Customer Address before sending your WhatsApp order.");
+                return;
+            }
+
+            const cartName = document.getElementById("cust-name");
+            const cartPhone = document.getElementById("cust-phone");
+            const cartLoc = document.getElementById("cust-location");
+            const cartPay = document.getElementById("cust-payment");
+            if (cartName) cartName.value = name;
+            if (cartPhone) cartPhone.value = phone;
+            if (cartLoc) cartLoc.value = location;
+            if (cartPay) cartPay.value = payment;
+
+            const sizes = (prod.sizes && prod.sizes.length > 0) ? prod.sizes : [{ name: 'Standard', price: prod.price || 0 }];
+            const select = document.getElementById(`size-select-${pendingQuickOrderIndex}`);
+            const selectedIdx = select ? parseInt(select.value, 10) : 0;
+            const chosenSize = sizes[selectedIdx] || sizes[0];
+
+            let text = `Hello Alfred Enterprise, I want to place an order:%0A%0A`;
+            text += `👤 *Customer Details:*%0A`;
+            text += `- Name: ${name}%0A`;
+            text += `- Phone: ${phone}%0A`;
+            text += `- Address: ${location}%0A`;
+            text += `- Payment Method: ${payment}%0A%0A`;
+            text += `🛒 *Ordered Item:*%0A`;
+            text += `1. ${prod.name} [Option: ${chosenSize.name}] - NLe ${chosenSize.price}%0A%0A`;
+            text += `💰 *Total Amount:* NLe ${parseFloat(chosenSize.price || 0).toFixed(2)}%0APlease confirm my order.`;
+
+            closeQuickOrderModal();
             window.open(`https://wa.me/23276655025?text=${text}`, '_blank');
         }
 
