@@ -18,10 +18,15 @@ export default async (req) => {
     // GET: Load saved profile picture
     if (req.method === "GET") {
       const data = await store.get("profile-picture", { type: "json" });
+      const savedImg =
+        data && typeof data.image === "string" && data.image
+          ? data.image
+          : data && typeof data.picture === "string" && data.picture
+          ? data.picture
+          : "";
+
       return new Response(
-        JSON.stringify({
-          picture: data && data.picture ? data.picture : ""
-        }),
+        JSON.stringify({ image: savedImg, picture: savedImg }),
         { status: 200, headers }
       );
     }
@@ -49,16 +54,27 @@ export default async (req) => {
       }
 
       const body = await req.json();
-      if (!body || typeof body.picture !== "string" || !body.picture) {
+      const incomingImage =
+        body && typeof body.image === "string" && body.image
+          ? body.image
+          : body && typeof body.picture === "string" && body.picture
+          ? body.picture
+          : "";
+
+      if (!incomingImage) {
         return new Response(
           JSON.stringify({ error: "Invalid picture payload" }),
           { status: 400, headers }
         );
       }
 
-      await store.setJSON("profile-picture", { picture: body.picture });
+      await store.setJSON("profile-picture", {
+        image: incomingImage,
+        picture: incomingImage
+      });
+
       return new Response(
-        JSON.stringify({ ok: true }),
+        JSON.stringify({ ok: true, image: incomingImage, picture: incomingImage }),
         { status: 200, headers }
       );
     }
