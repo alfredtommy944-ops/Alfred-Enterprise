@@ -677,7 +677,7 @@
 
         async function loadProfilePicture() {
             try {
-                const res = await fetch("/.netlify/functions/profile-pic");
+                const res = await fetch("/.netlify/functions/profile-picture");
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data && data.image) {
@@ -694,7 +694,7 @@
             try {
                 setSyncBadge(true, "Uploading profile picture...");
                 const compressed = await compressImageFile(file, 300, 0.75);
-                const res = await fetch("/.netlify/functions/profile-pic", {
+                const res = await fetch("/.netlify/functions/profile-picture", {
                     method: "PUT",
                     headers: getOwnerHeaders(),
                     body: JSON.stringify({ image: compressed })
