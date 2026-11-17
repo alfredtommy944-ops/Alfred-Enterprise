@@ -50,3 +50,4 @@ export default async (req) => {
     return new Response(JSON.stringify({ error: err.message || "Error" }), { status: 500, headers });
   }
 };
+
