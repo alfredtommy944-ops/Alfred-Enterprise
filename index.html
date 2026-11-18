@@ -11,12 +11,10 @@
     <link rel="icon" type="image/jpeg" sizes="512x512" href="/icons/icon-512.jpg?v=2">
     <link rel="apple-touch-icon" href="/icons/icon-512.jpg?v=2">
     <style>
-        /* --- LUXURIOUS WHITE & GOLD THEME ENHANCEMENTS --- */
         body {
             background: radial-gradient(circle at top, #ffffff 0%, #f8fafc 55%, #eef2f6 100%) !important;
             color: #0f172a;
         }
-
         .luxury-card {
             background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(254, 252, 246, 0.98));
             border: 1px solid rgba(180, 83, 9, 0.28);
@@ -26,7 +24,6 @@
             max-width: 960px;
             box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
         }
-
         .luxury-gold-title {
             background: linear-gradient(90deg, #92400e, #b45309, #d97706);
             -webkit-background-clip: text;
@@ -35,14 +32,12 @@
             letter-spacing: 0.4px;
             margin-bottom: 12px;
         }
-
         .service-pills {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             margin-top: 16px;
         }
-
         .service-pill {
             background: linear-gradient(135deg, #fffbeb, #fef3c7);
             border: 1px solid rgba(180, 83, 9, 0.35);
@@ -53,7 +48,6 @@
             font-weight: 700;
             box-shadow: 0 2px 6px rgba(180, 83, 9, 0.08);
         }
-
         .faith-banner {
             background: linear-gradient(135deg, #fffbeb 0%, #ffffff 50%, #fef3c7 100%);
             border: 1px solid rgba(180, 83, 9, 0.35);
@@ -64,7 +58,6 @@
             text-align: center;
             box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
         }
-
         .faith-quote {
             font-style: italic;
             color: #1e293b;
@@ -72,7 +65,6 @@
             line-height: 1.65;
             margin-bottom: 8px;
         }
-
         .faith-ref {
             color: #b45309;
             font-weight: 700;
@@ -84,17 +76,48 @@
 </head>
 <body class="bg-white text-slate-900 min-h-screen font-sans pb-20">
 
+    <!-- Phone-Style Pop-Up Notification Dialog for New Product Drops -->
+    <div id="new-drop-popup" class="fixed inset-x-0 top-4 z-50 px-4 hidden pointer-events-none">
+        <div class="max-w-md mx-auto bg-white border-2 border-amber-600 rounded-2xl p-4 shadow-2xl pointer-events-auto space-y-3">
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-9 h-9 rounded-full bg-amber-100 border border-amber-600/30 flex items-center justify-center text-lg shrink-0">🔔</span>
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-amber-700">Alfred Enterprise Alert</p>
+                        <h4 id="new-drop-popup-title" class="text-sm font-extrabold text-slate-900">New products have been dropped!</h4>
+                    </div>
+                </div>
+                <button type="button" onclick="dismissNewProductsBanner()" aria-label="Close pop-up notification" class="text-slate-400 hover:text-slate-800 font-bold text-base leading-none px-1">✕</button>
+            </div>
+            <p id="new-drop-popup-body" class="text-xs text-slate-700 leading-relaxed">
+                Fresh electronics and items are now available. Tap below to view them.
+            </p>
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+                <a href="#store-section" onclick="dismissNewProductsBanner()" class="flex-1 text-center bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition">
+                    View New Products
+                </a>
+                <button type="button" id="enable-phone-alerts-btn" onclick="enablePhoneNotifications()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-xs transition">
+                    📱 Phone Alert
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Header & Business Profile -->
-    <header class="bg-white/95 border-b border-amber-600/25 p-4 sticky top-0 z-50 backdrop-blur shadow-sm">
+    <header class="bg-white/95 border-b border-amber-600/25 p-4 sticky top-0 z-40 backdrop-blur shadow-sm">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
                 <img id="header-profile-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Business Owner" decoding="async" fetchpriority="high" class="w-12 h-12 rounded-full object-cover border-2 border-amber-600 shadow">
                 <div>
                     <h1 class="text-xl font-bold tracking-wide luxury-gold-title">Alfred Enterprise</h1>
-                    <p class="text-xs text-slate-600 font-medium">IDA, Kenema City, Sierra Leone | +23276655025</p>
+                    <p class="text-xs text-slate-600 font-medium">IDA, Kenema City, Sierra Leone | <a href="tel:+23276655025" class="hover:text-amber-800 underline">+23276655025</a></p>
+                    <p class="text-xs text-slate-600 font-medium"><a href="tel:+23290655025" class="hover:text-amber-800 underline">+23290655025</a></p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2.5 flex-wrap justify-center">
+                <button type="button" id="header-phone-alert-btn" onclick="enablePhoneNotifications()" class="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-600/35 px-3 py-2 rounded-lg font-bold text-xs transition">
+                    🔔 Alerts
+                </button>
                 <button onclick="toggleCartModal()" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow transition">
                     🛒 Cart <span id="cart-count" class="bg-white text-amber-800 px-2 py-0.5 rounded-full text-xs font-extrabold">0</span>
                 </button>
@@ -108,6 +131,22 @@
     <!-- Main Content Container -->
     <main class="max-w-6xl mx-auto p-4 space-y-8 mt-4">
 
+        <!-- Shop Storefront Photo + Free Urgent Delivery Message -->
+        <section class="luxury-card p-4 sm:p-5 overflow-hidden space-y-3">
+            <div class="bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-100 border border-amber-600/35 rounded-xl p-3.5 text-center shadow-2xs space-y-1">
+                <p class="text-xs sm:text-sm font-extrabold text-amber-950">
+                    🚚 Free Urgent Delivery Around Kenema (Especially IDA Community)!
+                </p>
+                <p class="text-xs sm:text-sm text-slate-800 leading-relaxed">
+                    Whenever you are in urgent need around Kenema, especially in the IDA community, you do not need to walk to our shop—just call
+                    <a href="tel:+23276655025" class="font-bold text-amber-800 underline">+23276655025</a><br>
+                    <a href="tel:+23290655025" class="font-bold text-amber-800 underline">+23290655025</a>
+                    or send your order via WhatsApp, and we will bring the exact product right to where you are staying.
+                </p>
+            </div>
+            <img src="store-front.jpg" alt="Alfred Enterprise Storefront at IDA, Kenema City" decoding="async" fetchpriority="high" class="w-full h-auto rounded-xl object-cover block">
+        </section>
+
         <!-- Banner / Intro -->
         <section class="luxury-card text-center relative overflow-hidden">
             <h2 class="text-2xl sm:text-3xl font-extrabold mb-2 luxury-gold-title">Welcome to Alfred Enterprise</h2>
@@ -118,7 +157,7 @@
             </div>
         </section>
 
-        <!-- Private Owner Management Panel (Hidden by default) -->
+        <!-- Private Owner Management Panel -->
         <section id="owner-panel" class="hidden bg-white border-2 border-emerald-600 rounded-2xl p-6 shadow-xl space-y-6">
             <div class="flex justify-between items-center border-b border-slate-200 pb-3">
                 <div class="flex items-center gap-3">
@@ -164,24 +203,26 @@
                             </div>
                             <button type="button" onclick="addSizeRow()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ Add Size/Watt</button>
                         </div>
-                        
+
                         <div id="size-rows-container" class="space-y-2 max-h-48 overflow-y-auto pr-1">
                             <div class="flex gap-2 items-center size-row">
                                 <input type="text" placeholder="Size/Watt (e.g. 5 Watts)" class="flex-1 bg-slate-50 border border-slate-300 rounded p-2 text-xs text-slate-900 size-input-name">
                                 <input type="number" placeholder="Price NLe" class="w-28 bg-slate-50 border border-slate-300 rounded p-2 text-xs text-slate-900 size-input-price">
                                 <button type="button" onclick="this.parentElement.remove()" class="text-red-600 hover:text-red-500 text-xs px-2 py-1 font-bold">✕</button>
                             </div>
-                            <div class="flex gap-2 items-center size-row">
-                                <input type="text" placeholder="Size/Watt (e.g. 10 Watts)" class="flex-1 bg-slate-50 border border-slate-300 rounded p-2 text-xs text-slate-900 size-input-name">
-                                <input type="number" placeholder="Price NLe" class="w-28 bg-slate-50 border border-slate-300 rounded p-2 text-xs text-slate-900 size-input-price">
-                                <button type="button" onclick="this.parentElement.remove()" class="text-red-600 hover:text-red-500 text-xs px-2 py-1 font-bold">✕</button>
-                            </div>
                         </div>
                     </div>
 
-                    <div>
+                    <div class="sm:col-span-2">
                         <label class="block text-xs text-slate-600 font-medium mb-1">Product Photo</label>
                         <input type="file" id="new-prod-image" accept="image/*" class="w-full text-xs text-slate-700 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white">
+                        <div id="new-prod-preview-wrap" class="hidden mt-3 flex items-center gap-3 bg-white p-2.5 rounded-lg border border-slate-200">
+                            <img id="new-prod-preview-img" src="" alt="Selected product preview" class="w-20 h-20 object-cover rounded-lg border border-amber-600/30">
+                            <div class="flex-1 space-y-1">
+                                <p id="new-prod-preview-status" class="text-xs font-semibold text-emerald-700">Selected photo ready</p>
+                                <button type="button" onclick="clearSelectedProductPhoto()" class="text-xs text-red-600 hover:text-red-500 font-semibold">Remove Photo</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div>
@@ -194,16 +235,65 @@
 
         <!-- Store Section -->
         <section id="store-section" class="space-y-4">
+            <div id="new-products-banner" class="hidden bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-100 border border-amber-600/45 rounded-2xl p-3.5 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-start sm:items-center gap-2.5">
+                    <span class="text-lg leading-none">🆕</span>
+                    <div>
+                        <p id="new-products-banner-title" class="text-xs sm:text-sm font-extrabold text-amber-950">New products have been added!</p>
+                        <p id="new-products-banner-sub" class="text-[11px] text-amber-800">Check out the latest items available at Alfred Enterprise.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 self-end sm:self-center">
+                    <a href="#products-grid" onclick="dismissNewProductsBanner()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs transition">View Items</a>
+                    <button type="button" onclick="dismissNewProductsBanner()" aria-label="Dismiss new products notification" class="text-amber-900 hover:bg-amber-200/70 px-2 py-1 rounded-lg text-xs font-bold">✕</button>
+                </div>
+            </div>
+
             <div class="flex justify-between items-center border-b border-amber-600/25 pb-2">
                 <h3 class="text-xl font-bold luxury-gold-title pl-2">Available Products</h3>
                 <span id="product-count" class="text-xs text-slate-500 font-medium">Loading items...</span>
             </div>
-            <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                <!-- Dynamic Products Injected Here -->
+
+            <!-- Category Filter Bar, Instant Search Box & Price Sort -->
+            <div class="bg-white border border-amber-600/25 rounded-2xl p-4 shadow-sm space-y-3">
+                <div class="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
+                    <div class="relative flex-1">
+                        <input
+                            type="search"
+                            id="product-search-input"
+                            oninput="handleSearchInput(this.value)"
+                            placeholder="Search products by name, watt, or category..."
+                            aria-label="Search products"
+                            class="w-full bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-xl pl-3.5 pr-9 py-2 text-xs sm:text-sm text-slate-900 outline-none transition"
+                        >
+                        <button
+                            type="button"
+                            id="clear-search-btn"
+                            onclick="resetProductFilters()"
+                            title="Clear search, sort, and category filter"
+                            class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs font-bold px-1.5 py-0.5 rounded"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    <select
+                        id="product-sort-select"
+                        onchange="handleSortChange(this.value)"
+                        aria-label="Sort products by price"
+                        class="bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-900 font-medium outline-none transition"
+                    >
+                        <option value="default">Sort: Default</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
+                    </select>
+                </div>
+                <div id="category-filter-bar" class="flex flex-wrap gap-2"></div>
             </div>
+
+            <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
         </section>
 
-        <!-- About Alfred Enterprise & Services Section -->
+        <!-- About Section -->
         <section id="about-section" class="luxury-card space-y-4">
             <h2 class="text-xl font-bold luxury-gold-title">About Alfred Enterprise — IDA, Kenema</h2>
             <p class="text-slate-700 leading-relaxed text-sm">
@@ -231,6 +321,49 @@
 
     </main>
 
+    <!-- Single-Product Quick WhatsApp Customer Details Modal -->
+    <div id="quick-order-modal" class="fixed inset-0 bg-slate-900/50 hidden z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white border border-amber-600/30 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                <h3 class="text-lg font-bold luxury-gold-title">Customer Details for WhatsApp Order</h3>
+                <button type="button" onclick="closeQuickOrderModal()" class="text-slate-500 hover:text-slate-900 font-bold text-lg">✕</button>
+            </div>
+            <div id="quick-order-summary" class="bg-amber-50/80 border border-amber-600/25 rounded-xl p-3 text-xs text-slate-800 space-y-1">
+                <p class="font-bold text-amber-950" id="quick-order-item-name">Item</p>
+                <p id="quick-order-item-option" class="text-slate-700">Option: Standard — NLe 0</p>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[11px] text-slate-600 font-semibold mb-1">Full Name *</label>
+                    <input type="text" id="quick-cust-name" placeholder="e.g. Mohamed Brima" class="w-full bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-lg p-2.5 text-xs text-slate-900 outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-600 font-semibold mb-1">Phone Number *</label>
+                    <input type="tel" id="quick-cust-phone" placeholder="e.g. +23276XXXXXX" class="w-full bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-lg p-2.5 text-xs text-slate-900 outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-600 font-semibold mb-1">Customer Address / Delivery Location *</label>
+                    <input type="text" id="quick-cust-location" placeholder="e.g. IDA, Kenema City" class="w-full bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-lg p-2.5 text-xs text-slate-900 outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-600 font-semibold mb-1">Payment Method *</label>
+                    <select id="quick-cust-payment" class="w-full bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-lg p-2.5 text-xs text-slate-900 outline-none">
+                        <option value="Orange Money">Orange Money</option>
+                        <option value="QMoney">QMoney</option>
+                        <option value="AfriMoney">AfriMoney</option>
+                        <option value="Cash on Delivery">Cash on Delivery</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex gap-2.5 pt-2">
+                <button type="button" onclick="closeQuickOrderModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl font-bold text-xs transition">Cancel</button>
+                <button type="button" onclick="submitQuickOrderWhatsApp()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-1.5 transition">
+                    📲 Continue to WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Shopping Cart Modal -->
     <div id="cart-modal" class="fixed inset-0 bg-slate-900/50 hidden z-50 flex justify-end backdrop-blur-xs">
         <div class="bg-white border-l border-amber-600/25 w-full max-w-md h-full p-6 flex flex-col justify-between shadow-2xl overflow-y-auto">
@@ -239,12 +372,9 @@
                     <h3 class="text-lg font-bold luxury-gold-title">Your Shopping Cart</h3>
                     <button onclick="toggleCartModal()" class="text-slate-500 hover:text-slate-900 font-bold text-lg">✕</button>
                 </div>
-                
                 <div id="cart-items" class="space-y-3 max-h-[35vh] overflow-y-auto">
                     <p class="text-xs text-slate-500">Your cart is empty.</p>
                 </div>
-
-                <!-- Customer Details Form -->
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 mt-2">
                     <h4 class="font-semibold text-xs text-amber-800">Customer Details & Payment</h4>
                     <div>
@@ -263,13 +393,13 @@
                         <label class="block text-[11px] text-slate-600 font-medium mb-1">Payment Method</label>
                         <select id="cust-payment" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900">
                             <option value="Orange Money">Orange Money</option>
+                            <option value="QMoney">QMoney</option>
                             <option value="AfriMoney">AfriMoney</option>
                             <option value="Cash on Delivery">Cash on Delivery</option>
                         </select>
                     </div>
                 </div>
             </div>
-
             <div class="border-t border-slate-200 pt-4 space-y-3 mt-4">
                 <div class="flex justify-between font-bold text-base text-slate-900">
                     <span>Total:</span>
@@ -282,59 +412,226 @@
         </div>
     </div>
 
-    <!-- JavaScript Application Logic -->
     <script>
+        const WHATSAPP_NUMBER = "23276655025";
         const CACHE_PRODUCTS_KEY = "alfred_ent_cached_products_v1";
         const CACHE_PROFILE_KEY = "alfred_ent_cached_profile_v1";
+        const SESSION_OWNER_KEY = "alfred_ent_owner_key_v1";
+        const SEEN_PRODUCTS_KEY = "alfred_ent_seen_products_v1";
+        const NOTIFIED_DROP_SIG_KEY = "alfred_ent_notified_drop_sig_v1";
+        const DEFAULT_CATEGORIES = ["Lighting & Power", "Electronics", "Digital Services", "Hardware"];
+        const FALLBACK_PRODUCT_IMG = "data:image/svg+xml;utf8," + encodeURIComponent(
+            `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="160" viewBox="0 0 300 160">
+                <rect width="300" height="160" fill="#fef3c7"/>
+                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#92400e" font-family="sans-serif" font-size="14" font-weight="bold">Alfred Enterprise</text>
+            </svg>`
+        );
 
         let products = [];
         let cart = [];
         let ownerKey = "";
+        let selectedProductImageData = "";
+        let activeCategory = "All";
+        let searchQuery = "";
+        let sortOrder = "default";
+        let pendingQuickOrderIndex = null;
 
-        // Apply cached profile picture & products immediately if available
-        function hydrateFromCache() {
-            try {
-                const cachedPic = localStorage.getItem(CACHE_PROFILE_KEY);
-                if (cachedPic) {
-                    document.getElementById("header-profile-img").src = cachedPic;
+        try {
+            ownerKey = (sessionStorage.getItem(SESSION_OWNER_KEY) || "").trim();
+        } catch (e) {}
+
+        function getOwnerHeaders() {
+            const cleanKey = (ownerKey || "").trim();
+            return {
+                "Content-Type": "application/json",
+                "x-profile-upload-key": cleanKey,
+                "x-owner-upload-key": cleanKey
+            };
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+            const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+            const rawData = atob(base64);
+            return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+        }
+
+        function getProductSignature(p) {
+            const sizesPart = Array.isArray(p.sizes)
+                ? p.sizes.map(s => `${s.name || ""}:${s.price || ""}`).join("|")
+                : `${p.price || 0}`;
+            return `${(p.name || "").trim().toLowerCase()}::${(p.category || "").trim().toLowerCase()}::${sizesPart}`;
+        }
+
+        async function updatePhoneAlertButtonState() {
+            const btns = [
+                document.getElementById("enable-phone-alerts-btn"),
+                document.getElementById("header-phone-alert-btn")
+            ];
+            if (!("Notification" in window)) {
+                btns.forEach(btn => btn && btn.classList.add("hidden"));
+                return;
+            }
+            const perm = Notification.permission;
+            let hasPushSub = false;
+            if (perm === "granted" && "serviceWorker" in navigator) {
+                try {
+                    const reg = await navigator.serviceWorker.ready;
+                    hasPushSub = Boolean(await reg.pushManager.getSubscription());
+                } catch (e) {}
+            }
+            btns.forEach(btn => {
+                if (!btn) return;
+                if (perm === "granted" && hasPushSub) btn.innerText = "✓ Home Alerts On";
+                else if (perm === "granted") btn.innerText = "🔔 Enable Home Push";
+                else if (perm === "denied") btn.innerText = "🔔 In-App Alert";
+                else btn.innerText = "🔔 Alerts";
+            });
+        }
+
+        async function registerBackgroundPushSubscription() {
+            if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+            const reg = await navigator.serviceWorker.ready;
+            let sub = await reg.pushManager.getSubscription();
+            if (!sub) {
+                const keyRes = await fetch("/.netlify/functions/push-subscribe");
+                const keyData = await keyRes.json();
+                if (!keyRes.ok || !keyData.publicKey) {
+                    throw new Error(keyData.error || "Missing VAPID public key");
                 }
-            } catch (e) {}
+                sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
+                });
+            }
+            const saveRes = await fetch("/.netlify/functions/push-subscribe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ subscription: sub })
+            });
+            if (!saveRes.ok) throw new Error("Could not register device for push alerts");
+            return true;
+        }
 
+        async function enablePhoneNotifications() {
+            if (!("Notification" in window)) {
+                showNewDropPopup("New products have been dropped!", "Check out the latest items now available at Alfred Enterprise.");
+                return;
+            }
+            if (Notification.permission === "denied") {
+                alert("Phone notifications are blocked in your browser settings. Please allow notifications for this site so alerts pop up on your home screen.");
+                await updatePhoneAlertButtonState();
+                return;
+            }
             try {
-                const cachedProds = localStorage.getItem(CACHE_PRODUCTS_KEY);
-                if (cachedProds) {
-                    const parsed = JSON.parse(cachedProds);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        products = parsed;
-                        renderProducts();
-                    }
+                const permission = Notification.permission === "granted"
+                    ? "granted"
+                    : await Notification.requestPermission();
+                if (permission === "granted") {
+                    await registerBackgroundPushSubscription();
+                    await updatePhoneAlertButtonState();
+                    alert("✓ Home-screen alerts are now ON for Alfred Enterprise!");
+                } else {
+                    await updatePhoneAlertButtonState();
+                }
+            } catch (err) {
+                await updatePhoneAlertButtonState();
+                alert("Could not turn on alerts yet: " + err.message);
+            }
+        }
+
+        async function broadcastPushToAllSubscribers(title, body) {
+            if (!ownerKey) return null;
+            try {
+                const res = await fetch("/.netlify/functions/push-broadcast", {
+                    method: "POST",
+                    headers: getOwnerHeaders(),
+                    body: JSON.stringify({ title, body, url: "/#store-section" })
+                });
+                return res.ok ? await res.json().catch(() => ({})) : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function showNewDropPopup(title, body) {
+            const popup = document.getElementById("new-drop-popup");
+            const popupTitle = document.getElementById("new-drop-popup-title");
+            const popupBody = document.getElementById("new-drop-popup-body");
+            if (popupTitle) popupTitle.innerText = title;
+            if (popupBody) popupBody.innerText = body;
+            if (popup) popup.classList.remove("hidden");
+        }
+
+        function dismissNewProductsBanner() {
+            const banner = document.getElementById("new-products-banner");
+            const popup = document.getElementById("new-drop-popup");
+            if (banner) banner.classList.add("hidden");
+            if (popup) popup.classList.add("hidden");
+            try {
+                localStorage.setItem(SEEN_PRODUCTS_KEY, JSON.stringify(products.map(getProductSignature)));
+            } catch (e) {}
+        }
+
+        function evaluateNewProductsBanner() {
+            const banner = document.getElementById("new-products-banner");
+            const titleEl = document.getElementById("new-products-banner-title");
+            const subEl = document.getElementById("new-products-banner-sub");
+            if (!banner || !Array.isArray(products) || products.length === 0) return;
+            try {
+                const currentSigs = products.map(getProductSignature);
+                const rawSeen = localStorage.getItem(SEEN_PRODUCTS_KEY);
+                if (!rawSeen) {
+                    localStorage.setItem(SEEN_PRODUCTS_KEY, JSON.stringify(currentSigs));
+                    return;
+                }
+                const seenSet = new Set(JSON.parse(rawSeen) || []);
+                const brandNew = products.filter(p => !seenSet.has(getProductSignature(p)));
+                if (brandNew.length > 0) {
+                    const namesPreview = brandNew.slice(0, 3).map(p => p.name).join(", ");
+                    const popupTitle = brandNew.length === 1 ? `New Drop: ${brandNew[0].name}!` : `${brandNew.length} New Products Dropped!`;
+                    const popupBody = `Newly available at Alfred Enterprise: ${namesPreview}${brandNew.length > 3 ? "..." : ""}`;
+                    if (titleEl) titleEl.innerText = brandNew.length === 1 ? `New product added: ${brandNew[0].name}!` : `${brandNew.length} new products have been added!`;
+                    if (subEl) subEl.innerText = popupBody;
+                    banner.classList.remove("hidden");
+                    showNewDropPopup(popupTitle, popupBody);
                 }
             } catch (e) {}
         }
 
-        // Fast client-side image compression so product/profile photos upload and save in milliseconds
-        function compressImageFile(file, maxWidth = 600, quality = 0.78) {
+        function clearSelectedProductPhoto() {
+            selectedProductImageData = "";
+            const fileInput = document.getElementById("new-prod-image");
+            const wrap = document.getElementById("new-prod-preview-wrap");
+            const img = document.getElementById("new-prod-preview-img");
+            if (fileInput) fileInput.value = "";
+            if (img) img.src = "";
+            if (wrap) wrap.classList.add("hidden");
+        }
+
+        function compressImageFile(file, maxWidth = 480, quality = 0.72) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onerror = () => reject(new Error("Failed to read file"));
                 reader.onload = (event) => {
+                    const dataUrl = event.target && event.target.result;
+                    if (!dataUrl || typeof dataUrl !== "string") return reject(new Error("Empty file"));
                     const img = new Image();
-                    img.onerror = () => resolve(event.target.result);
+                    img.onerror = () => resolve(dataUrl);
                     img.onload = () => {
                         const canvas = document.createElement("canvas");
-                        let width = img.width;
-                        let height = img.height;
+                        let width = img.width || maxWidth;
+                        let height = img.height || maxWidth;
                         if (width > maxWidth) {
                             height = Math.round((height * maxWidth) / width);
                             width = maxWidth;
                         }
                         canvas.width = width;
                         canvas.height = height;
-                        const ctx = canvas.getContext("2d");
-                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
                         resolve(canvas.toDataURL("image/jpeg", quality));
                     };
-                    img.src = event.target.result;
+                    img.src = dataUrl;
                 };
                 reader.readAsDataURL(file);
             });
@@ -343,40 +640,29 @@
         function setSyncBadge(visible, text = "Syncing online...", isError = false) {
             const badge = document.getElementById("sync-status");
             if (!badge) return;
-            if (!visible) {
-                badge.classList.add("hidden");
-                return;
-            }
+            if (!visible) return badge.classList.add("hidden");
             badge.innerText = text;
-            badge.className = `text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-                isError ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-800"
-            }`;
+            badge.className = `text-xs font-semibold px-2.5 py-0.5 rounded-full ${isError ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-800"}`;
             badge.classList.remove("hidden");
         }
 
-        // Run instant cache hydration right away, then fetch fresh data in parallel
-        hydrateFromCache();
-        loadProfilePicture();
-        loadProducts();
-
-        // Toggle Owner Mode with Password Prompt
         function toggleOwnerMode() {
             const panel = document.getElementById("owner-panel");
-            if (panel.classList.contains("hidden")) {
-                const key = prompt("Enter Owner Login Code:");
-                if (!key) return;
-                ownerKey = key;
+            if (panel.classList.contains("hidden") || !ownerKey) {
+                const rawKey = prompt("Enter Owner Login Code:");
+                if (!rawKey || !rawKey.trim()) return;
+                ownerKey = rawKey.trim();
+                try { sessionStorage.setItem(SESSION_OWNER_KEY, ownerKey); } catch (e) {}
                 panel.classList.remove("hidden");
                 document.getElementById("owner-toggle-btn").innerText = "Owner Mode Active";
             } else {
                 panel.classList.add("hidden");
                 ownerKey = "";
+                try { sessionStorage.removeItem(SESSION_OWNER_KEY); } catch (e) {}
                 document.getElementById("owner-toggle-btn").innerText = "Owner Login";
             }
-            renderProducts();
         }
 
-        // Add Dynamic Size Row in Owner Panel
         function addSizeRow() {
             const container = document.getElementById("size-rows-container");
             const row = document.createElement("div");
@@ -389,348 +675,412 @@
             container.appendChild(row);
         }
 
-        // Load Profile Picture from Netlify Blobs Backend & cache locally
         async function loadProfilePicture() {
             try {
-                const res = await fetch("/.netlify/functions/profile-picture");
+                const res = await fetch("/.netlify/functions/profile-pic");
+                if (!res.ok) return;
                 const data = await res.json();
-                if (data && data.picture) {
-                    document.getElementById("header-profile-img").src = data.picture;
-                    try {
-                        localStorage.setItem(CACHE_PROFILE_KEY, data.picture);
-                    } catch (e) {}
+                if (data && data.image) {
+                    document.getElementById("header-profile-img").src = data.image;
+                    try { localStorage.setItem(CACHE_PROFILE_KEY, data.image); } catch (e) {}
                 }
-            } catch (e) {
-                console.error("Failed to load profile picture", e);
-            }
+            } catch (e) {}
         }
 
-        // Upload Profile Picture (compressed + instant preview + online save)
         async function uploadProfilePicture() {
             const fileInput = document.getElementById("profile-file-input");
-            if (fileInput.files.length === 0) {
-                alert("Please select an image file first.");
-                return;
-            }
+            const file = fileInput.files && fileInput.files[0];
+            if (!file) return alert("Please choose a profile picture first.");
             try {
-                const compressedPic = await compressImageFile(fileInput.files[0], 400, 0.82);
-                const previousPic = document.getElementById("header-profile-img").src;
-                document.getElementById("header-profile-img").src = compressedPic;
-                setSyncBadge(true, "Saving profile picture online...");
-
-                const res = await fetch("/.netlify/functions/profile-picture", {
+                setSyncBadge(true, "Uploading profile picture...");
+                const compressed = await compressImageFile(file, 300, 0.75);
+                const res = await fetch("/.netlify/functions/profile-pic", {
                     method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "x-profile-upload-key": ownerKey
-                    },
-                    body: JSON.stringify({ picture: compressedPic })
+                    headers: getOwnerHeaders(),
+                    body: JSON.stringify({ image: compressed })
                 });
-                if (res.ok) {
-                    try {
-                        localStorage.setItem(CACHE_PROFILE_KEY, compressedPic);
-                    } catch (err) {}
-                    setSyncBadge(true, "✓ Profile saved online");
-                    setTimeout(() => setSyncBadge(false), 2500);
-                } else {
-                    document.getElementById("header-profile-img").src = previousPic;
-                    setSyncBadge(true, "Unauthorized or failed to save", true);
-                    alert("Unauthorized or failed to save profile picture.");
-                }
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Upload failed");
+                document.getElementById("header-profile-img").src = compressed;
+                try { localStorage.setItem(CACHE_PROFILE_KEY, compressed); } catch (e) {}
+                setSyncBadge(true, "Profile picture updated!", false);
             } catch (err) {
-                setSyncBadge(true, "Error saving profile picture", true);
-                alert("Error saving profile picture online.");
+                setSyncBadge(true, err.message, true);
+                alert(err.message);
             }
         }
 
-        // Load Products from Netlify Blobs Backend & cache locally
         async function loadProducts() {
             try {
                 const res = await fetch("/.netlify/functions/products");
+                if (!res.ok) throw new Error("Could not load products");
                 const data = await res.json();
-                products = data.products || [];
-                try {
-                    localStorage.setItem(CACHE_PRODUCTS_KEY, JSON.stringify(products));
-                } catch (e) {}
+                products = Array.isArray(data.products) ? data.products : [];
+                try { localStorage.setItem(CACHE_PRODUCTS_KEY, JSON.stringify(products)); } catch (e) {}
+                renderCategoryFilterBar();
                 renderProducts();
+                evaluateNewProductsBanner();
             } catch (e) {
-                console.error("Failed to load products", e);
-                if (products.length === 0) {
-                    document.getElementById("product-count").innerText = "Error loading products";
-                }
+                document.getElementById("product-count").innerText = "Unable to load items";
             }
         }
 
-        // Render Products Grid with Multiple Sizes/Watts Dropdown
+        function renderCategoryFilterBar() {
+            const bar = document.getElementById("category-filter-bar");
+            if (!bar) return;
+            const cats = ["All", ...new Set([...DEFAULT_CATEGORIES, ...products.map(p => p.category).filter(Boolean)])];
+            bar.innerHTML = cats.map(cat => {
+                const active = activeCategory === cat;
+                return `<button type="button" onclick="selectCategory('${cat.replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-full text-xs font-bold transition ${active ? "bg-amber-600 text-white shadow-xs" : "bg-slate-100 text-slate-700 hover:bg-amber-50"}">${cat}</button>`;
+            }).join("");
+        }
+
+        function selectCategory(cat) {
+            activeCategory = cat;
+            renderCategoryFilterBar();
+            renderProducts();
+        }
+
+        function handleSearchInput(val) {
+            searchQuery = (val || "").trim().toLowerCase();
+            document.getElementById("clear-search-btn").classList.toggle("hidden", !searchQuery && activeCategory === "All" && sortOrder === "default");
+            renderProducts();
+        }
+
+        function handleSortChange(val) {
+            sortOrder = val;
+            document.getElementById("clear-search-btn").classList.toggle("hidden", !searchQuery && activeCategory === "All" && sortOrder === "default");
+            renderProducts();
+        }
+
+        function resetProductFilters() {
+            activeCategory = "All";
+            searchQuery = "";
+            sortOrder = "default";
+            document.getElementById("product-search-input").value = "";
+            document.getElementById("product-sort-select").value = "default";
+            document.getElementById("clear-search-btn").classList.add("hidden");
+            renderCategoryFilterBar();
+            renderProducts();
+        }
+
+        function getMinPrice(p) {
+            if (Array.isArray(p.sizes) && p.sizes.length > 0) {
+                return Math.min(...p.sizes.map(s => Number(s.price) || 0));
+            }
+            return Number(p.price) || 0;
+        }
+
         function renderProducts() {
             const grid = document.getElementById("products-grid");
-            document.getElementById("product-count").innerText = `${products.length} items available`;
-            if (products.length === 0) {
-                grid.innerHTML = `<p class="text-xs text-slate-500 col-span-full text-center py-6">No products found online yet. Use Owner Mode to add products.</p>`;
+            const countEl = document.getElementById("product-count");
+            let filtered = products.map((p, idx) => ({ ...p, originalIndex: idx })).filter(item => {
+                const catMatch = activeCategory === "All" || item.category === activeCategory;
+                if (!catMatch) return false;
+                if (!searchQuery) return true;
+                const hay = `${item.name || ""} ${item.category || ""} ${item.desc || ""} ${(item.sizes || []).map(s => s.name).join(" ")}`.toLowerCase();
+                return hay.includes(searchQuery);
+            });
+
+            if (sortOrder === "price-asc") filtered.sort((a, b) => getMinPrice(a) - getMinPrice(b));
+            if (sortOrder === "price-desc") filtered.sort((a, b) => getMinPrice(b) - getMinPrice(a));
+
+            countEl.innerText = `${filtered.length} item${filtered.length === 1 ? "" : "s"}`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-sm text-slate-500 bg-white rounded-2xl border border-slate-200">No matching products found.</div>`;
                 return;
             }
-            grid.innerHTML = products.map((p, index) => {
-                let sizes = p.sizes;
-                if (!sizes || sizes.length === 0) {
-                    sizes = [{ name: 'Standard', price: p.price || 0 }];
-                }
+
+            grid.innerHTML = filtered.map(item => {
+                const idx = item.originalIndex;
+                const sizes = Array.isArray(item.sizes) && item.sizes.length > 0
+                    ? item.sizes
+                    : [{ name: "Standard", price: Number(item.price) || 0 }];
+                const firstPrice = Number(sizes[0].price) || 0;
 
                 return `
-                    <div class="bg-white border border-amber-600/25 rounded-xl overflow-hidden shadow-md flex flex-col justify-between hover:border-amber-600/60 hover:shadow-lg transition">
-                        <div>
-                            <img src="${p.image || 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=300'}" alt="${p.name}" loading="lazy" decoding="async" class="w-full h-40 object-cover">
-                            <div class="p-4 space-y-2">
-                                <span class="text-xs bg-amber-50 text-amber-800 border border-amber-600/30 px-2.5 py-0.5 rounded font-semibold">${p.category}</span>
-                                <h4 class="font-bold text-base text-slate-900">${p.name}</h4>
-                                <p class="text-xs text-slate-600 line-clamp-2">${p.description}</p>
-                                
-                                <!-- Multiple Sizes / Watts Selection Dropdown -->
-                                <div class="pt-2">
-                                    <label class="block text-[11px] text-slate-500 font-medium mb-1">Select Size / Wattage & Price:</label>
-                                    <select id="size-select-${index}" onchange="updateDisplayPrice(${index})" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs text-slate-900">
-                                        ${sizes.map((s, sIndex) => `<option value="${sIndex}">${s.name} - NLe ${s.price}</option>`).join('')}
-                                    </select>
-                                </div>
+                    <div class="bg-white border border-amber-600/25 rounded-2xl p-4 shadow-sm flex flex-col justify-between space-y-3">
+                        <div class="space-y-2">
+                            <img src="${item.image || FALLBACK_PRODUCT_IMG}" onerror="this.src='${FALLBACK_PRODUCT_IMG}'" alt="${item.name}" class="w-full h-44 object-cover rounded-xl bg-amber-50">
+                            <div class="flex justify-between items-start gap-2">
+                                <h4 class="font-bold text-slate-900 text-sm">${item.name}</h4>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 shrink-0">${item.category || "General"}</span>
+                            </div>
+                            <p class="text-xs text-slate-600 line-clamp-2">${item.desc || ""}</p>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Select Size / Watt:</label>
+                                <select id="size-select-${idx}" onchange="updateCardPrice(${idx})" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-slate-900">
+                                    ${sizes.map((s, sIdx) => `<option value="${sIdx}" data-price="${s.price}">${s.name} — NLe ${s.price}</option>`).join("")}
+                                </select>
                             </div>
                         </div>
-                        <div class="p-4 pt-3 flex justify-between items-center border-t border-slate-100 mt-2">
-                            <span id="price-display-${index}" class="font-extrabold text-amber-700">NLe ${sizes[0].price}</span>
-                            <div class="flex gap-2">
-                                <button onclick="addToCart(${index})" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs">Add to Cart</button>
-                                ${ownerKey ? `<button onclick="deleteProduct(${index})" class="bg-red-600 hover:bg-red-500 px-2 py-1.5 rounded-lg text-xs text-white">Delete</button>` : ''}
+                        <div class="pt-2 border-t border-slate-100 space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-slate-500">Price:</span>
+                                <span id="card-price-${idx}" class="text-sm font-extrabold text-amber-800">NLe ${firstPrice}</span>
                             </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="addToCart(${idx})" class="bg-amber-600 hover:bg-amber-500 text-white py-2 rounded-xl text-xs font-bold transition">+ Add to Cart</button>
+                                <button onclick="openQuickOrderModal(${idx})" class="bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-xl text-xs font-bold transition">📲 Quick Order</button>
+                            </div>
+                            ${ownerKey ? `<button onclick="deleteProduct(${idx})" class="w-full bg-red-50 hover:bg-red-100 text-red-700 py-1.5 rounded-lg text-xs font-bold">Delete Product</button>` : ""}
                         </div>
                     </div>
                 `;
-            }).join('');
+            }).join("");
         }
 
-        // Update Price on Screen when customer selects a different watt/size
-        function updateDisplayPrice(index) {
-            const select = document.getElementById(`size-select-${index}`);
-            const selectedIdx = select.value;
-            const p = products[index];
-            let sizes = p.sizes && p.sizes.length > 0 ? p.sizes : [{ name: 'Standard', price: p.price || 0 }];
-            const chosenSize = sizes[selectedIdx];
-            document.getElementById(`price-display-${index}`).innerText = `NLe ${chosenSize.price}`;
+        function updateCardPrice(idx) {
+            const sel = document.getElementById(`size-select-${idx}`);
+            const priceEl = document.getElementById(`card-price-${idx}`);
+            if (!sel || !priceEl) return;
+            const opt = sel.options[sel.selectedIndex];
+            priceEl.innerText = `NLe ${opt ? opt.getAttribute("data-price") : 0}`;
         }
 
-        // Add New Product IMMEDIATELY on click, with fast photo compression + background online sync
         async function addNewProduct() {
-            const nameInput = document.getElementById("new-prod-name");
-            const descInput = document.getElementById("new-prod-desc");
-            const fileInput = document.getElementById("new-prod-image");
-            const name = nameInput.value.trim();
+            const name = document.getElementById("new-prod-name").value.trim();
             const category = document.getElementById("new-prod-category").value;
-            const desc = descInput.value.trim();
+            const desc = document.getElementById("new-prod-desc").value.trim();
+            const rows = [...document.querySelectorAll("#size-rows-container .size-row")];
+            const sizes = rows.map(r => ({
+                name: r.querySelector(".size-input-name").value.trim(),
+                price: Number(r.querySelector(".size-input-price").value)
+            })).filter(s => s.name && s.price > 0);
 
-            if (!name) {
-                alert("Please provide a product name.");
-                return;
-            }
+            if (!name) return alert("Please enter a product name.");
+            if (sizes.length === 0) return alert("Please add at least one size/watt and price.");
 
-            let sizes = [];
-            const rowElements = document.querySelectorAll(".size-row");
-            rowElements.forEach(row => {
-                const sName = row.querySelector(".size-input-name").value.trim();
-                const sPrice = row.querySelector(".size-input-price").value;
-                if (sName && sPrice) {
-                    sizes.push({ name: sName, price: parseFloat(sPrice) });
-                }
-            });
+            const btn = document.getElementById("add-prod-btn");
+            btn.disabled = true;
+            btn.innerText = "Saving & Alerting Customers...";
 
-            if (sizes.length === 0) {
-                alert("Please add at least one size/wattage option and its price.");
-                return;
-            }
-
-            let imageUrl = "";
-            if (fileInput.files.length > 0) {
-                try {
-                    imageUrl = await compressImageFile(fileInput.files[0], 600, 0.78);
-                } catch (e) {
-                    imageUrl = "";
-                }
-            }
-
-            // 1. Add immediately to store UI & local cache without waiting for network
-            const newProduct = { 
-                name, 
-                category, 
-                price: sizes[0].price, 
-                sizes, 
-                description: desc, 
-                image: imageUrl 
-            };
-            products.push(newProduct);
             try {
-                localStorage.setItem(CACHE_PRODUCTS_KEY, JSON.stringify(products));
-            } catch (err) {}
-            renderProducts();
-
-            // Clear inputs immediately so you can keep adding products right away
-            nameInput.value = "";
-            descInput.value = "";
-            fileInput.value = "";
-            setSyncBadge(true, "✓ Added! Syncing online...");
-
-            // 2. Sync to Netlify online database in the background
-            try {
+                const newProduct = {
+                    name,
+                    category,
+                    desc,
+                    sizes,
+                    price: sizes[0].price,
+                    image: selectedProductImageData || ""
+                };
+                const updatedProducts = [...products, newProduct];
                 const res = await fetch("/.netlify/functions/products", {
                     method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "x-profile-upload-key": ownerKey
-                    },
-                    body: JSON.stringify({ products })
+                    headers: getOwnerHeaders(),
+                    body: JSON.stringify({ products: updatedProducts })
                 });
-                if (res.ok) {
-                    setSyncBadge(true, "✓ Saved online for all customers");
-                    setTimeout(() => setSyncBadge(false), 2500);
-                } else {
-                    products.pop();
-                    try {
-                        localStorage.setItem(CACHE_PRODUCTS_KEY, JSON.stringify(products));
-                    } catch (err) {}
-                    renderProducts();
-                    setSyncBadge(true, "Unauthorized - product reverted", true);
-                    alert("Unauthorized or failed to save online. Please check your Owner Login Code.");
-                }
-            } catch (e) {
-                setSyncBadge(true, "Network error saving online", true);
-                alert("Network error communicating with online server. Please check your internet connection.");
-            }
-        }
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Could not save product");
 
-        // Delete Product immediately + sync online
-        async function deleteProduct(index) {
-            if (!confirm("Are you sure you want to delete this product?")) return;
-            const backup = [...products];
-            products.splice(index, 1);
-            try {
-                localStorage.setItem(CACHE_PRODUCTS_KEY, JSON.stringify(products));
-            } catch (err) {}
-            renderProducts();
-            setSyncBadge(true, "Deleting online...");
+                products = updatedProducts;
+                try { localStorage.setItem(CACHE_PRODUCTS_KEY, JSON.stringify(products)); } catch (e) {}
 
-            try {
-                const res = await fetch("/.netlify/functions/products", {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json", "x-profile-upload-key": ownerKey },
-                    body: JSON.stringify({ products })
-                });
-                if (res.ok) {
-                    setSyncBadge(true, "✓ Deleted online");
-                    setTimeout(() => setSyncBadge(false), 2000);
-                } else {
-                    products = backup;
-                    renderProducts();
-                    setSyncBadge(true, "Unauthorized to delete", true);
-                }
-            } catch (e) {
-                products = backup;
+                await broadcastPushToAllSubscribers(
+                    `New Drop: ${name}!`,
+                    `${name} (${category}) is now available at Alfred Enterprise starting at NLe ${sizes[0].price}.`
+                );
+
+                document.getElementById("new-prod-name").value = "";
+                document.getElementById("new-prod-desc").value = "";
+                clearSelectedProductPhoto();
+                renderCategoryFilterBar();
                 renderProducts();
-                alert("Failed to delete product online.");
+                alert("✓ Product published and customer alerts sent!");
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "ADD NEW PRODUCT";
             }
         }
 
-        // Shopping Cart Management
-        function toggleCartModal() {
-            const modal = document.getElementById("cart-modal");
-            modal.classList.toggle("hidden");
+        async function deleteProduct(idx) {
+            if (!confirm("Delete this product?")) return;
+            try {
+                const updatedProducts = products.filter((_, i) => i !== idx);
+                const res = await fetch("/.netlify/functions/products", {
+                    method: "PUT",
+                    headers: getOwnerHeaders(),
+                    body: JSON.stringify({ products: updatedProducts })
+                });
+                if (!res.ok) throw new Error("Failed to delete product");
+                products = updatedProducts;
+                try { localStorage.setItem(CACHE_PRODUCTS_KEY, JSON.stringify(products)); } catch (e) {}
+                renderProducts();
+            } catch (err) {
+                alert(err.message);
+            }
         }
 
-        function addToCart(index) {
-            const prod = products[index];
-            let sizes = prod.sizes && prod.sizes.length > 0 ? prod.sizes : [{ name: 'Standard', price: prod.price || 0 }];
-            
-            const select = document.getElementById(`size-select-${index}`);
-            const selectedIdx = select ? select.value : 0;
-            const chosenSize = sizes[selectedIdx];
+        function getSelectedProductOption(idx) {
+            const p = products[idx];
+            const sel = document.getElementById(`size-select-${idx}`);
+            const sizes = Array.isArray(p.sizes) && p.sizes.length > 0 ? p.sizes : [{ name: "Standard", price: Number(p.price) || 0 }];
+            const chosen = sizes[sel ? Number(sel.value) || 0 : 0] || sizes[0];
+            return { name: p.name, optionName: chosen.name, price: Number(chosen.price) || 0 };
+        }
 
-            const cartItem = {
-                name: prod.name,
-                sizeName: chosenSize.name,
-                price: chosenSize.price
-            };
-
-            cart.push(cartItem);
+        function addToCart(idx) {
+            const item = getSelectedProductOption(idx);
+            const existing = cart.find(c => c.name === item.name && c.optionName === item.optionName);
+            if (existing) existing.qty += 1;
+            else cart.push({ ...item, qty: 1 });
             updateCartUI();
-            alert(`${prod.name} (${chosenSize.name}) added to cart!`);
+            alert(`Added ${item.name} (${item.optionName}) to cart!`);
+        }
+
+        function removeFromCart(idx) {
+            cart.splice(idx, 1);
+            updateCartUI();
         }
 
         function updateCartUI() {
-            document.getElementById("cart-count").innerText = cart.length;
+            document.getElementById("cart-count").innerText = cart.reduce((sum, i) => sum + i.qty, 0);
             const container = document.getElementById("cart-items");
+            const totalEl = document.getElementById("cart-total");
             if (cart.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-500">Your cart is empty.</p>`;
-                document.getElementById("cart-total").innerText = "NLe 0.00";
+                totalEl.innerText = "NLe 0.00";
                 return;
             }
             let total = 0;
             container.innerHTML = cart.map((item, i) => {
-                total += parseFloat(item.price || 0);
+                const sub = item.price * item.qty;
+                total += sub;
                 return `
-                    <div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-200 text-sm">
+                    <div class="flex justify-between items-center bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs">
                         <div>
-                            <p class="font-bold text-slate-900">${item.name} <span class="text-xs text-amber-700 font-semibold">(${item.sizeName})</span></p>
-                            <p class="text-xs text-amber-700 font-bold">NLe ${item.price}</p>
+                            <p class="font-bold text-slate-900">${item.name} (${item.optionName})</p>
+                            <p class="text-slate-600">NLe ${item.price} × ${item.qty} = <strong>NLe ${sub}</strong></p>
                         </div>
-                        <button onclick="removeFromCart(${i})" class="text-xs text-red-600 hover:text-red-500 font-medium">Remove</button>
+                        <button onclick="removeFromCart(${i})" class="text-red-600 font-bold px-2">✕</button>
                     </div>
                 `;
-            }).join('');
-            document.getElementById("cart-total").innerText = `NLe ${total.toFixed(2)}`;
+            }).join("");
+            totalEl.innerText = `NLe ${total.toFixed(2)}`;
         }
 
-        function removeFromCart(i) {
-            cart.splice(i, 1);
-            updateCartUI();
+        function toggleCartModal() {
+            document.getElementById("cart-modal").classList.toggle("hidden");
         }
 
-        // WhatsApp Ordering with Customer Details & Sizes/Watts
+        function openQuickOrderModal(idx) {
+            pendingQuickOrderIndex = idx;
+            const item = getSelectedProductOption(idx);
+            document.getElementById("quick-order-item-name").innerText = item.name;
+            document.getElementById("quick-order-item-option").innerText = `Option: ${item.optionName} — NLe ${item.price}`;
+            document.getElementById("quick-order-modal").classList.remove("hidden");
+        }
+
+        function closeQuickOrderModal() {
+            pendingQuickOrderIndex = null;
+            document.getElementById("quick-order-modal").classList.add("hidden");
+        }
+
+        function submitQuickOrderWhatsApp() {
+            if (pendingQuickOrderIndex === null) return;
+            const item = getSelectedProductOption(pendingQuickOrderIndex);
+            const name = document.getElementById("quick-cust-name").value.trim();
+            const phone = document.getElementById("quick-cust-phone").value.trim();
+            const location = document.getElementById("quick-cust-location").value.trim();
+            const payment = document.getElementById("quick-cust-payment").value;
+            if (!name || !phone || !location) return alert("Please fill in your name, phone number, and delivery location.");
+
+            const msg = [
+                "Hello Alfred Enterprise, I would like to place an order:",
+                `• Item: ${item.name} (${item.optionName}) — NLe ${item.price}`,
+                `• Customer: ${name}`,
+                `• Phone: ${phone}`,
+                `• Delivery Location: ${location}`,
+                `• Payment Method: ${payment}`
+            ].join("\n");
+
+            closeQuickOrderModal();
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
+        }
+
         function checkoutWhatsApp() {
-            if (cart.length === 0) {
-                alert("Your cart is empty!");
-                return;
-            }
-
+            if (cart.length === 0) return alert("Your cart is empty.");
             const name = document.getElementById("cust-name").value.trim();
             const phone = document.getElementById("cust-phone").value.trim();
             const location = document.getElementById("cust-location").value.trim();
             const payment = document.getElementById("cust-payment").value;
+            if (!name || !phone || !location) return alert("Please enter your name, phone number, and delivery location.");
 
-            if (!name || !phone || !location) {
-                alert("Please fill in your Name, Phone Number, and Location before placing your order.");
-                return;
-            }
+            const lines = cart.map(i => `• ${i.name} (${i.optionName}) x${i.qty} — NLe ${i.price * i.qty}`);
+            const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
+            const msg = [
+                "Hello Alfred Enterprise, I would like to place a cart order:",
+                ...lines,
+                `• Total: NLe ${total}`,
+                `• Customer: ${name}`,
+                `• Phone: ${phone}`,
+                `• Delivery Location: ${location}`,
+                `• Payment Method: ${payment}`
+            ].join("\n");
 
-            let text = `Hello Alfred Enterprise, I want to place an order:%0A%0A`;
-            text += `👤 *Customer Details:*%0A`;
-            text += `- Name: ${name}%0A`;
-            text += `- Phone: ${phone}%0A`;
-            text += `- Location: ${location}%0A`;
-            text += `- Payment Method: ${payment}%0A%0A`;
-            text += `🛒 *Ordered Items:*%0A`;
-
-            let total = 0;
-            cart.forEach((item, index) => {
-                text += `${index + 1}. ${item.name} [Option: ${item.sizeName}] - NLe ${item.price}%0A`;
-                total += parseFloat(item.price || 0);
-            });
-            text += `%0A💰 *Total Amount:* NLe ${total.toFixed(2)}%0APlease confirm my order.`;
-            
-            window.open(`https://wa.me/23276655025?text=${text}`, '_blank');
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
         }
-    </script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js?v=2')
-            .then(() => console.log('Service Worker v2 registered successfully'))
-            .catch((err) => console.log('Service Worker registration failed: ', err));
+
+        document.addEventListener("DOMContentLoaded", () => {
+            renderCategoryFilterBar();
+            updatePhoneAlertButtonState();
+            if ("Notification" in window && Notification.permission === "granted") {
+                registerBackgroundPushSubscription().then(updatePhoneAlertButtonState).catch(() => {});
+            }
+            const prodFileInput = document.getElementById("new-prod-image");
+            if (prodFileInput) {
+                prodFileInput.addEventListener("change", async (e) => {
+                    const file = e.target.files && e.target.files[0];
+                    if (!file) return;
+                    const wrap = document.getElementById("new-prod-preview-wrap");
+                    const img = document.getElementById("new-prod-preview-img");
+                    const status = document.getElementById("new-prod-preview-status");
+                    if (wrap) wrap.classList.remove("hidden");
+                    if (status) status.innerText = "Preparing photo...";
+                    try {
+                        selectedProductImageData = await compressImageFile(file, 480, 0.72);
+                        if (img) img.src = selectedProductImageData;
+                        if (status) status.innerText = "✓ Photo ready to add";
+                    } catch (err) {
+                        selectedProductImageData = "";
+                        if (status) status.innerText = "Could not read photo — please try another image";
+                    }
+                });
+            }
         });
-      }
+
+        try {
+            const cachedPic = localStorage.getItem(CACHE_PROFILE_KEY);
+            if (cachedPic) document.getElementById("header-profile-img").src = cachedPic;
+            const cachedProds = localStorage.getItem(CACHE_PRODUCTS_KEY);
+            if (cachedProds) {
+                const parsed = JSON.parse(cachedProds);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    products = parsed;
+                    renderProducts();
+                    evaluateNewProductsBanner();
+                }
+            }
+        } catch (e) {}
+
+        if (ownerKey) {
+            document.getElementById("owner-panel").classList.remove("hidden");
+            document.getElementById("owner-toggle-btn").innerText = "Owner Mode Active";
+        }
+
+        loadProfilePicture();
+        loadProducts();
+
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("/sw.js?v=3")
+                    .then(() => console.log("Service Worker v3 registered"))
+                    .catch((err) => console.log("SW error:", err));
+            });
+        }
     </script>
 </body>
 </html>
