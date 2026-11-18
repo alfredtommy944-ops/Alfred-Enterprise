@@ -32,92 +32,21 @@
             letter-spacing: 0.4px;
             margin-bottom: 12px;
         }
-        .service-pills {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 16px;
-        }
-        .service-pill {
-            background: linear-gradient(135deg, #fffbeb, #fef3c7);
-            border: 1px solid rgba(180, 83, 9, 0.35);
-            color: #78350f;
-            padding: 8px 14px;
-            border-radius: 999px;
-            font-size: 0.88rem;
-            font-weight: 700;
-            box-shadow: 0 2px 6px rgba(180, 83, 9, 0.08);
-        }
-        .faith-banner {
-            background: linear-gradient(135deg, #fffbeb 0%, #ffffff 50%, #fef3c7 100%);
-            border: 1px solid rgba(180, 83, 9, 0.35);
-            border-radius: 18px;
-            padding: 22px;
-            margin: 24px auto;
-            max-width: 960px;
-            text-align: center;
-            box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
-        }
-        .faith-quote {
-            font-style: italic;
-            color: #1e293b;
-            font-size: 1.05rem;
-            line-height: 1.65;
-            margin-bottom: 8px;
-        }
-        .faith-ref {
-            color: #b45309;
-            font-weight: 700;
-            font-size: 0.85rem;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
     </style>
 </head>
 <body class="bg-white text-slate-900 min-h-screen font-sans pb-20">
-
-    <!-- Phone-Style Pop-Up Notification Dialog for New Product Drops -->
-    <div id="new-drop-popup" class="fixed inset-x-0 top-4 z-50 px-4 hidden pointer-events-none">
-        <div class="max-w-md mx-auto bg-white border-2 border-amber-600 rounded-2xl p-4 shadow-2xl pointer-events-auto space-y-3">
-            <div class="flex items-start justify-between gap-3">
-                <div class="flex items-center gap-2.5">
-                    <span class="w-9 h-9 rounded-full bg-amber-100 border border-amber-600/30 flex items-center justify-center text-lg shrink-0">🔔</span>
-                    <div>
-                        <p class="text-[11px] font-bold uppercase tracking-wider text-amber-700">Alfred Enterprise Alert</p>
-                        <h4 id="new-drop-popup-title" class="text-sm font-extrabold text-slate-900">New products have been dropped!</h4>
-                    </div>
-                </div>
-                <button type="button" onclick="dismissNewProductsBanner()" aria-label="Close pop-up notification" class="text-slate-400 hover:text-slate-800 font-bold text-base leading-none px-1">✕</button>
-            </div>
-            <p id="new-drop-popup-body" class="text-xs text-slate-700 leading-relaxed">
-                Fresh electronics and items are now available. Tap below to view them.
-            </p>
-            <div class="flex flex-wrap items-center gap-2 pt-1">
-                <a href="#store-section" onclick="dismissNewProductsBanner()" class="flex-1 text-center bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition">
-                    View New Products
-                </a>
-                <button type="button" id="enable-phone-alerts-btn" onclick="enablePhoneNotifications()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-xs transition">
-                    📱 Phone Alert
-                </button>
-            </div>
-        </div>
-    </div>
 
     <!-- Header & Business Profile -->
     <header class="bg-white/95 border-b border-amber-600/25 p-4 sticky top-0 z-40 backdrop-blur shadow-sm">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <img id="header-profile-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Business Owner" decoding="async" fetchpriority="high" class="w-12 h-12 rounded-full object-cover border-2 border-amber-600 shadow">
+                <img id="header-profile-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Business Owner" class="w-12 h-12 rounded-full object-cover border-2 border-amber-600 shadow">
                 <div>
                     <h1 class="text-xl font-bold tracking-wide luxury-gold-title">Alfred Enterprise</h1>
                     <p class="text-xs text-slate-600 font-medium">IDA, Kenema City, Sierra Leone | <a href="tel:+23276655025" class="hover:text-amber-800 underline">+23276655025</a></p>
-                    <p class="text-xs text-slate-600 font-medium"><a href="tel:+23290655025" class="hover:text-amber-800 underline">+23290655025</a></p>
                 </div>
             </div>
             <div class="flex items-center gap-2.5 flex-wrap justify-center">
-                <button type="button" id="header-phone-alert-btn" onclick="enablePhoneNotifications()" class="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-600/35 px-3 py-2 rounded-lg font-bold text-xs transition">
-                    🔔 Alerts
-                </button>
                 <button onclick="toggleCartModal()" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow transition">
                     🛒 Cart <span id="cart-count" class="bg-white text-amber-800 px-2 py-0.5 rounded-full text-xs font-extrabold">0</span>
                 </button>
@@ -131,168 +60,187 @@
     <!-- Main Content Container -->
     <main class="max-w-6xl mx-auto p-4 space-y-8 mt-4">
 
-        <!-- Shop Storefront Photo + Free Urgent Delivery Message -->
-        <section class="luxury-card p-4 sm:p-5 overflow-hidden space-y-3">
-            <div class="bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-100 border border-amber-600/35 rounded-xl p-3.5 text-center shadow-2xs space-y-1">
-                <p class="text-xs sm:text-sm font-extrabold text-amber-950">
-                    🚚 Free Urgent Delivery Around Kenema (Especially IDA Community)!
-                </p>
-                <p class="text-xs sm:text-sm text-slate-800 leading-relaxed">
-                    Whenever you are in urgent need around Kenema, especially in the IDA community, you do not need to walk to our shop—just call
-                    <a href="tel:+23276655025" class="font-bold text-amber-800 underline">+23276655025</a><br>
-                    <a href="tel:+23290655025" class="font-bold text-amber-800 underline">+23290655025</a>
-                    or send your order via WhatsApp, and we will bring the exact product right to where you are staying.
-                </p>
-            </div>
-            <img src="store-front.jpg" alt="Alfred Enterprise Storefront at IDA, Kenema City" decoding="async" fetchpriority="high" class="w-full h-auto rounded-xl object-cover block">
-        </section>
-
-        <!-- Banner / Intro -->
-        <section class="luxury-card text-center relative overflow-hidden">
-            <h2 class="text-2xl sm:text-3xl font-extrabold mb-2 luxury-gold-title">Welcome to Alfred Enterprise</h2>
-            <p class="text-sm text-slate-600 max-w-2xl mx-auto mb-4">Your premier destination for certified electronics, power solutions, and fast financial mobile money transfers at IDA, Kenema.</p>
-            <div class="flex justify-center gap-4 flex-wrap">
-                <a href="#store-section" class="bg-amber-600 hover:bg-amber-500 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow transition">Browse Products</a>
-                <a href="#about-section" class="bg-white border border-amber-600/40 text-amber-800 hover:bg-amber-50 px-5 py-2.5 rounded-xl font-semibold text-sm shadow-sm transition">About Business</a>
-            </div>
-        </section>
-
         <!-- Private Owner Management Panel -->
         <section id="owner-panel" class="hidden bg-white border-2 border-emerald-600 rounded-2xl p-6 shadow-xl space-y-6">
             <div class="flex justify-between items-center border-b border-slate-200 pb-3">
-                <div class="flex items-center gap-3">
-                    <h3 class="text-lg font-bold text-emerald-700">🛡️ Owner Management Panel (Private)</h3>
-                    <span id="sync-status" class="hidden text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">Syncing online...</span>
-                </div>
+                <h3 class="text-lg font-bold text-emerald-700">🛡️ Owner Management Panel (Private)</h3>
                 <button onclick="toggleOwnerMode()" class="text-xs bg-red-600 hover:bg-red-500 px-3 py-1.5 rounded-lg text-white font-semibold">Exit Owner Mode</button>
             </div>
-
-            <!-- Profile Picture Management -->
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                <h4 class="font-semibold text-sm text-amber-800">Business Profile Picture</h4>
-                <div class="flex flex-col sm:flex-row gap-3 items-center">
-                    <input type="file" id="profile-file-input" accept="image/*" class="w-full text-sm text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-500">
-                    <button onclick="uploadProfilePicture()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-lg text-sm font-semibold whitespace-nowrap">Save Profile Picture</button>
-                </div>
-            </div>
-
             <!-- Add New Product Form -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
-                <h4 class="font-semibold text-sm text-amber-800">Add New Product Online (Multiple Sizes & Watts)</h4>
+                <h4 class="font-semibold text-sm text-amber-800">Add New Product Online</h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs text-slate-600 font-medium mb-1">Product Name</label>
                         <input type="text" id="new-prod-name" placeholder="e.g. LED Bulb" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm text-slate-900">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-600 font-medium mb-1">Category</label>
-                        <select id="new-prod-category" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm text-slate-900">
-                            <option value="Lighting & Power">Lighting & Power</option>
-                            <option value="Electronics">Electronics</option>
-                            <option value="Digital Services">Digital Services</option>
-                            <option value="Hardware">Hardware</option>
-                        </select>
-                    </div>
-
-                    <!-- Multi-Size / Wattage Builder -->
-                    <div class="sm:col-span-2 bg-white p-4 rounded-xl border border-slate-200 space-y-3">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <label class="block text-xs font-bold text-amber-800">Sizes / Wattages & Prices (NLe)</label>
-                                <p class="text-[11px] text-slate-500">Add as many size/watt options as you need (e.g. 5W, 7W, 10W, 60W).</p>
-                            </div>
-                            <button type="button" onclick="addSizeRow()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ Add Size/Watt</button>
-                        </div>
-
-                        <div id="size-rows-container" class="space-y-2 max-h-48 overflow-y-auto pr-1">
-                            <div class="flex gap-2 items-center size-row">
-                                <input type="text" placeholder="Size/Watt (e.g. 5 Watts)" class="flex-1 bg-slate-50 border border-slate-300 rounded p-2 text-xs text-slate-900 size-input-name">
-                                <input type="number" placeholder="Price NLe" class="w-28 bg-slate-50 border border-slate-300 rounded p-2 text-xs text-slate-900 size-input-price">
-                                <button type="button" onclick="this.parentElement.remove()" class="text-red-600 hover:text-red-500 text-xs px-2 py-1 font-bold">✕</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs text-slate-600 font-medium mb-1">Product Photo</label>
-                        <input type="file" id="new-prod-image" accept="image/*" class="w-full text-xs text-slate-700 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white">
-                        <div id="new-prod-preview-wrap" class="hidden mt-3 flex items-center gap-3 bg-white p-2.5 rounded-lg border border-slate-200">
-                            <img id="new-prod-preview-img" src="" alt="Selected product preview" class="w-20 h-20 object-cover rounded-lg border border-amber-600/30">
-                            <div class="flex-1 space-y-1">
-                                <p id="new-prod-preview-status" class="text-xs font-semibold text-emerald-700">Selected photo ready</p>
-                                <button type="button" onclick="clearSelectedProductPhoto()" class="text-xs text-red-600 hover:text-red-500 font-semibold">Remove Photo</button>
-                            </div>
-                        </div>
+                        <label class="block text-xs text-slate-600 font-medium mb-1">Price (NLe)</label>
+                        <input type="number" id="new-prod-price" placeholder="e.g. 150" class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm text-slate-900">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs text-slate-600 font-medium mb-1">Description</label>
-                    <textarea id="new-prod-desc" rows="2" placeholder="Product details..." class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-sm text-slate-900"></textarea>
-                </div>
-                <button id="add-prod-btn" onclick="addNewProduct()" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-2.5 rounded-lg font-bold text-sm shadow transition">ADD NEW PRODUCT</button>
+                <button onclick="addNewProduct()" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-2.5 rounded-lg font-bold text-sm shadow transition">ADD NEW PRODUCT</button>
             </div>
         </section>
 
         <!-- Store Section -->
         <section id="store-section" class="space-y-4">
-            <div id="new-products-banner" class="hidden bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-100 border border-amber-600/45 rounded-2xl p-3.5 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="flex items-start sm:items-center gap-2.5">
-                    <span class="text-lg leading-none">🆕</span>
-                    <div>
-                        <p id="new-products-banner-title" class="text-xs sm:text-sm font-extrabold text-amber-950">New products have been added!</p>
-                        <p id="new-products-banner-sub" class="text-[11px] text-amber-800">Check out the latest items available at Alfred Enterprise.</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 self-end sm:self-center">
-                    <a href="#products-grid" onclick="dismissNewProductsBanner()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs transition">View Items</a>
-                    <button type="button" onclick="dismissNewProductsBanner()" aria-label="Dismiss new products notification" class="text-amber-900 hover:bg-amber-200/70 px-2 py-1 rounded-lg text-xs font-bold">✕</button>
-                </div>
-            </div>
-
             <div class="flex justify-between items-center border-b border-amber-600/25 pb-2">
                 <h3 class="text-xl font-bold luxury-gold-title pl-2">Available Products</h3>
                 <span id="product-count" class="text-xs text-slate-500 font-medium">Loading items...</span>
             </div>
-
-            <!-- Category Filter Bar, Instant Search Box & Price Sort -->
-            <div class="bg-white border border-amber-600/25 rounded-2xl p-4 shadow-sm space-y-3">
-                <div class="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
-                    <div class="relative flex-1">
-                        <input
-                            type="search"
-                            id="product-search-input"
-                            oninput="handleSearchInput(this.value)"
-                            placeholder="Search products by name, watt, or category..."
-                            aria-label="Search products"
-                            class="w-full bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-xl pl-3.5 pr-9 py-2 text-xs sm:text-sm text-slate-900 outline-none transition"
-                        >
-                        <button
-                            type="button"
-                            id="clear-search-btn"
-                            onclick="resetProductFilters()"
-                            title="Clear search, sort, and category filter"
-                            class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs font-bold px-1.5 py-0.5 rounded"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                    <select
-                        id="product-sort-select"
-                        onchange="handleSortChange(this.value)"
-                        aria-label="Sort products by price"
-                        class="bg-slate-50 border border-slate-300 focus:border-amber-600 focus:bg-white rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-900 font-medium outline-none transition"
-                    >
-                        <option value="default">Sort: Default</option>
-                        <option value="price-asc">Price: Low to High</option>
-                        <option value="price-desc">Price: High to Low</option>
-                    </select>
-                </div>
-                <div id="category-filter-bar" class="flex flex-wrap gap-2"></div>
-            </div>
-
             <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
         </section>
 
-        <!-- About Section -->
-        <section id="about-section" class="luxury-card space-y-4">
-            <h2 class="text-xl font-bold luxury-gold-title">About Alfred Enterprise
+    </main>
+
+    <!-- Shopping Cart Modal -->
+    <div id="cart-modal" class="fixed inset-0 bg-slate-900/50 hidden z-50 flex justify-end backdrop-blur-xs">
+        <div class="bg-white border-l border-amber-600/25 w-full max-w-md h-full p-6 flex flex-col justify-between shadow-2xl overflow-y-auto">
+            <div class="space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                    <h3 class="text-lg font-bold luxury-gold-title">Your Shopping Cart</h3>
+                    <button onclick="toggleCartModal()" class="text-slate-500 hover:text-slate-900 font-bold text-lg">✕</button>
+                </div>
+                <div id="cart-items" class="space-y-3">
+                    <p class="text-xs text-slate-500">Your cart is empty.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SESSION_OWNER_KEY = "alfred_ent_owner_key_v1";
+        let products = [];
+        let cart = [];
+        let ownerKey = "";
+
+        try {
+            ownerKey = (sessionStorage.getItem(SESSION_OWNER_KEY) || "").trim();
+        } catch (e) {}
+
+        function getOwnerHeaders() {
+            const cleanKey = (ownerKey || "").trim();
+            return {
+                "Content-Type": "application/json",
+                "x-profile-upload-key": cleanKey,
+                "x-owner-upload-key": cleanKey
+            };
+        }
+
+        function toggleOwnerMode() {
+            const panel = document.getElementById("owner-panel");
+            const btn = document.getElementById("owner-toggle-btn");
+            if (panel.classList.contains("hidden") || !ownerKey) {
+                const rawKey = prompt("Enter Owner Login Code:");
+                if (!rawKey || !rawKey.trim()) return;
+                ownerKey = rawKey.trim();
+                try { sessionStorage.setItem(SESSION_OWNER_KEY, ownerKey); } catch (e) {}
+                panel.classList.remove("hidden");
+                if (btn) btn.innerText = "Owner Mode Active";
+                renderProducts();
+            } else {
+                panel.classList.add("hidden");
+                ownerKey = "";
+                try { sessionStorage.removeItem(SESSION_OWNER_KEY); } catch (e) {}
+                if (btn) btn.innerText = "Owner Login";
+                renderProducts();
+            }
+        }
+
+        async function loadProducts() {
+            try {
+                const res = await fetch("/.netlify/functions/products");
+                if (!res.ok) throw new Error("Could not load products");
+                const data = await res.json();
+                products = Array.isArray(data.products) ? data.products : [];
+                renderProducts();
+            } catch (e) {
+                document.getElementById("product-count").innerText = "Unable to load items";
+            }
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById("products-grid");
+            const countEl = document.getElementById("product-count");
+            countEl.innerText = `${products.length} item${products.length === 1 ? "" : "s"}`;
+
+            if (products.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-sm text-slate-500 bg-white rounded-2xl border border-slate-200">No products found. Use Owner Login to add items.</div>`;
+                return;
+            }
+
+            grid.innerHTML = products.map((item, idx) => `
+                <div class="bg-white border border-amber-600/25 rounded-2xl p-4 shadow-sm flex flex-col justify-between space-y-3">
+                    <div class="space-y-2">
+                        <h4 class="font-bold text-slate-900 text-sm">${item.name}</h4>
+                        <p class="text-sm font-extrabold text-amber-800">NLe ${item.price || 0}</p>
+                    </div>
+                    <div class="pt-2 border-t border-slate-100 space-y-2">
+                        <button onclick="addToCart(${idx})" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-2 rounded-xl text-xs font-bold transition">+ Add to Cart</button>
+                        ${ownerKey ? `<button onclick="deleteProduct(${idx})" class="w-full bg-red-600 hover:bg-red-500 text-white py-2 rounded-xl text-xs font-bold transition">Delete Product</button>` : ""}
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        async function addNewProduct() {
+            const name = document.getElementById("new-prod-name").value.trim();
+            const price = Number(document.getElementById("new-prod-price").value) || 0;
+            if (!name || price <= 0) return alert("Please enter a valid product name and price.");
+
+            try {
+                const updatedProducts = [...products, { name, price, category: "General", desc: "" }];
+                const res = await fetch("/.netlify/functions/products", {
+                    method: "PUT",
+                    headers: getOwnerHeaders(),
+                    body: JSON.stringify({ products: updatedProducts })
+                });
+                if (!res.ok) throw new Error("Could not save product");
+                products = updatedProducts;
+                document.getElementById("new-prod-name").value = "";
+                document.getElementById("new-prod-price").value = "";
+                renderProducts();
+                alert("✓ Product added successfully!");
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+        async function deleteProduct(idx) {
+            if (!confirm("Delete this product?")) return;
+            try {
+                const updatedProducts = products.filter((_, i) => i !== idx);
+                const res = await fetch("/.netlify/functions/products", {
+                    method: "PUT",
+                    headers: getOwnerHeaders(),
+                    body: JSON.stringify({ products: updatedProducts })
+                });
+                if (!res.ok) throw new Error("Failed to delete product");
+                products = updatedProducts;
+                renderProducts();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        function toggleCartModal() {
+            document.getElementById("cart-modal").classList.toggle("hidden");
+        }
+
+        function addToCart(idx) {
+            const item = products[idx];
+            cart.push({ name: item.name, price: item.price, qty: 1 });
+            document.getElementById("cart-count").innerText = cart.length;
+            alert(`Added ${item.name} to cart!`);
+        }
+
+        if (ownerKey) {
+            document.getElementById("owner-panel").classList.remove("hidden");
+            document.getElementById("owner-toggle-btn").innerText = "Owner Mode Active";
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>
