@@ -187,14 +187,6 @@
                         Broadcast to All Customers
                     </button>
                 </div>
-
-                <!-- Temporary VAPID Key Generator Helper -->
-                <div class="pt-2 border-t border-slate-200 space-y-2">
-                    <button type="button" onclick="generateTempVapidKeys()" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-2 rounded-lg font-bold text-xs shadow transition">
-                        🔑 Generate Matching VAPID Keys (Temporary)
-                    </button>
-                    <textarea id="temp-vapid-output" rows="4" readonly placeholder="Your publicKey and privateKey will appear here so you can copy them..." class="w-full bg-white border border-slate-300 rounded-lg p-2 text-[11px] text-slate-900 font-mono"></textarea>
-                </div>
             </div>
 
             <!-- Add New Product Form -->
@@ -614,31 +606,6 @@
             } else {
                 setSyncBadge(true, result.error, true);
                 alert(`Broadcast failed: ${result.error}`);
-            }
-        }
-
-        async function generateTempVapidKeys() {
-            if (!ownerKey) {
-                alert("Please log into Owner Mode first.");
-                return;
-            }
-            const out = document.getElementById("temp-vapid-output");
-            if (out) out.value = "Generating keys...";
-            try {
-                const res = await fetch("/.netlify/functions/generate-vapid", {
-                    headers: getOwnerHeaders()
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) {
-                    throw new Error(data.error || `Server returned ${res.status}`);
-                }
-                if (out) {
-                    out.value = JSON.stringify(data, null, 2);
-                }
-                alert("✓ Keys generated! Copy publicKey and privateKey into Netlify Environment variables, then remove this helper.");
-            } catch (err) {
-                if (out) out.value = "";
-                alert("Could not generate keys: " + err.message);
             }
         }
 
