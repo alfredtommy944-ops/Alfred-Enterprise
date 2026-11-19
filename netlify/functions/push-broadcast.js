@@ -36,6 +36,9 @@ export default async (req) => {
     const payload = JSON.stringify({
       title: String(body.title || "Alfred Enterprise — New Drop!").trim(),
       body: String(body.body || "New items are now available at IDA, Kenema City.").trim(),
+      icon: String(body.icon || "/icons/icon-192.jpg").trim(),
+      badge: "/icons/icon-192.jpg",
+      image: body.image ? String(body.image).trim() : "/store-front.jpg",
       url: String(body.url || "/#store-section").trim(),
       tag: `alfred-drop-${Date.now()}`
     });
