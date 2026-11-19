@@ -1,8 +1,8 @@
-const CACHE_NAME = "alfred-enterprise-v2";
+const CACHE_NAME = "alfred-enterprise-v4";
 const STATIC_ASSETS = [
   "/",
   "/index.html",
-  "/manifest.webmanifest",
+  "/manifest.webmanifest?v=2",
   "/icons/icon-192.jpg?v=2",
   "/icons/icon-512.jpg?v=2"
 ];
@@ -36,8 +36,13 @@ self.addEventListener("fetch", (event) => {
   // Always let Netlify Functions / API requests hit the network directly
   if (url.pathname.startsWith("/.netlify/")) return;
 
-  // Network-first for manifest and icons so new icons always replace old ones
-  if (url.pathname.includes("manifest") || url.pathname.startsWith("/icons/")) {
+  // Network-first for HTML pages, manifest, and icons so updates always load cleanly
+  const isHtmlRequest =
+    request.mode === "navigate" ||
+    url.pathname === "/" ||
+    url.pathname.endsWith(".html");
+
+  if (isHtmlRequest || url.pathname.includes("manifest") || url.pathname.startsWith("/icons/")) {
     event.respondWith(
       fetch(request)
         .then((networkRes) => {
@@ -50,7 +55,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache-first with background refresh for page/static assets
+  // Cache-first with background refresh for other static assets
   event.respondWith(
     caches.match(request).then((cachedRes) => {
       const fetchPromise = fetch(request)
@@ -61,6 +66,51 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() => cachedRes);
       return cachedRes || fetchPromise;
+    })
+  );
+});
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { body: event.data.text() };
+    }
+  }
+
+  const title = data.title || "Alfred Enterprise — New Drop!";
+  const options = {
+    body: data.body || "New items are now available at IDA, Kenema City.",
+    icon: data.icon || "/icons/icon-192.jpg?v=2",
+    badge: data.badge || "/icons/icon-192.jpg?v=2",
+    image: data.image || undefined,
+    tag: data.tag || "alfred-enterprise-alert",
+    renotify: true,
+    data: {
+      url: data.url || "/#store-section"
+    }
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || "/#store-section";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ("focus" in client) {
+          client.navigate(targetUrl);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
     })
   );
 });
