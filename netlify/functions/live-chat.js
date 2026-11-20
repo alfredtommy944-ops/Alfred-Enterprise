@@ -7,6 +7,9 @@ const CORS_HEADERS = {
   "Content-Type": "application/json"
 };
 
+const AUTO_REPLY_TEXT =
+  "Thank you for messaging Alfred Enterprise at IDA, Kenema! We have received your message and will reply shortly. For urgent orders or free delivery around Kenema/IDA, you can also call or WhatsApp +23276655025 / +23290655025.";
+
 function isAuthorizedOwner(event) {
   const expected = (
     process.env.OWNER_UPLOAD_KEY ||
@@ -32,7 +35,6 @@ export async function handler(event) {
 
   try {
     if (event.httpMethod === "GET") {
-      // Owner listing all active conversations
       if (params.all === "1") {
         if (!isAuthorizedOwner(event)) {
           return { statusCode: 401, headers: CORS_HEADERS, body: JSON.stringify({ error: "Unauthorized" }) };
@@ -45,7 +47,6 @@ export async function handler(event) {
         };
       }
 
-      // Single customer thread
       const chatId = (params.chatId || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64);
       if (!chatId) {
         return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ messages: [] }) };
@@ -77,6 +78,7 @@ export async function handler(event) {
       const existing = (await store.get(threadKey, { type: "json" })) || {
         chatId,
         customerName,
+        autoReplied: false,
         messages: []
       };
 
@@ -84,28 +86,49 @@ export async function handler(event) {
         existing.customerName = customerName;
       }
 
+      const nowIso = new Date().toISOString();
       const msgObj = {
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
         sender,
         text,
-        time: new Date().toISOString()
+        time: nowIso
       };
 
       existing.messages.push(msgObj);
+
+      let latestPreview = text;
+      let latestSender = sender;
+      let latestTime = nowIso;
+
+      // Send a one-time automatic reply on a customer's first message
+      if (sender === "customer" && !existing.autoReplied && existing.messages.length === 1) {
+        const autoReplyObj = {
+          id: (Date.now() + 1).toString(36) + Math.random().toString(36).slice(2, 6),
+          sender: "owner",
+          text: AUTO_REPLY_TEXT,
+          time: new Date(Date.now() + 1000).toISOString(),
+          isAutoReply: true
+        };
+        existing.messages.push(autoReplyObj);
+        existing.autoReplied = true;
+        latestPreview = AUTO_REPLY_TEXT;
+        latestSender = "owner";
+        latestTime = autoReplyObj.time;
+      }
+
       if (existing.messages.length > 100) {
         existing.messages = existing.messages.slice(-100);
       }
       await store.setJSON(threadKey, existing);
 
-      // Update summary index for Owner Mode
       let indexList = (await store.get("chat_index", { type: "json" })) || [];
       indexList = indexList.filter((c) => c.chatId !== chatId);
       indexList.unshift({
         chatId,
         customerName: existing.customerName || "Customer",
-        lastMessage: text,
-        lastSender: sender,
-        updatedAt: msgObj.time
+        lastMessage: latestPreview,
+        lastSender: latestSender,
+        updatedAt: latestTime
       });
       if (indexList.length > 50) {
         indexList = indexList.slice(0, 50);
