@@ -167,28 +167,6 @@
                 <button onclick="toggleOwnerMode()" class="text-xs bg-red-600 hover:bg-red-500 px-3 py-1.5 rounded-lg text-white font-semibold">Exit Owner Mode</button>
             </div>
 
-            <!-- Customer Live Chat Inbox (Owner Replies) -->
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                <div class="flex justify-between items-center gap-2">
-                    <div>
-                        <h4 class="font-semibold text-sm text-amber-800">💬 Customer Live Chat Inbox</h4>
-                        <p class="text-[11px] text-slate-500">View customer messages and send personal replies (auto-reply already greets new visitors).</p>
-                    </div>
-                    <button type="button" onclick="loadOwnerConversations()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Refresh Chats</button>
-                </div>
-                <div id="owner-chat-threads" class="space-y-2 max-h-40 overflow-y-auto">
-                    <p class="text-xs text-slate-500">Tap Refresh Chats to load customer conversations.</p>
-                </div>
-                <div id="owner-active-thread-box" class="hidden bg-white border border-slate-200 rounded-xl p-3 space-y-2.5">
-                    <p id="owner-active-thread-label" class="text-xs font-bold text-slate-900">Chatting with Customer</p>
-                    <div id="owner-thread-messages" class="space-y-2 max-h-48 overflow-y-auto text-xs"></div>
-                    <div class="flex gap-2 pt-1">
-                        <input type="text" id="owner-reply-input" placeholder="Type your reply to customer..." class="flex-1 bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-slate-900">
-                        <button type="button" onclick="sendOwnerChatReply()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 rounded-lg text-xs font-bold">Send Reply</button>
-                    </div>
-                </div>
-            </div>
-
             <!-- Profile Picture Management -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                 <h4 class="font-semibold text-sm text-amber-800">Business Profile Picture</h4>
@@ -345,37 +323,6 @@
             </div>
         </section>
 
-        <!-- Customer Live Chat Section Under Page Content -->
-        <section id="live-chat-section" class="luxury-card space-y-4">
-            <div class="flex flex-wrap justify-between items-center gap-2">
-                <div>
-                    <h2 class="text-xl font-bold luxury-gold-title mb-1">💬 Live Chat with Alfred Enterprise</h2>
-                    <p class="text-xs text-slate-600">Ask about products, prices, mobile money transfers, or urgent delivery around IDA, Kenema. First messages get an instant automatic reply.</p>
-                </div>
-                <button type="button" onclick="loadCustomerChat()" class="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-600/35 px-3 py-1.5 rounded-lg text-xs font-bold transition">
-                    Refresh Messages
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <input type="text" id="chat-customer-name" placeholder="Your Name (optional)" class="bg-white border border-slate-300 focus:border-amber-600 rounded-lg p-2.5 text-xs text-slate-900 outline-none">
-                <div class="text-[11px] text-slate-500 flex items-center px-1">
-                    Instant auto-reply enabled • Replies also via +23276655025
-                </div>
-            </div>
-
-            <div id="customer-chat-messages" class="bg-white border border-slate-200 rounded-xl p-3.5 h-56 overflow-y-auto space-y-2.5 text-xs">
-                <p class="text-slate-500">Start a chat below—we'll reply right away!</p>
-            </div>
-
-            <div class="flex gap-2">
-                <input type="text" id="customer-chat-input" onkeydown="if(event.key==='Enter'){sendCustomerChatMessage();}" placeholder="Type your message here..." class="flex-1 bg-white border border-slate-300 focus:border-amber-600 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 outline-none">
-                <button type="button" id="send-customer-chat-btn" onclick="sendCustomerChatMessage()" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow transition">
-                    Send
-                </button>
-            </div>
-        </section>
-
         <!-- Word of Faith Section -->
         <section class="faith-banner">
             <p class="faith-quote">
@@ -484,7 +431,6 @@
         const CACHE_PROFILE_KEY = "alfred_ent_cached_profile_v1";
         const SESSION_OWNER_KEY = "alfred_ent_owner_key_v1";
         const SEEN_PRODUCTS_KEY = "alfred_ent_seen_products_v1";
-        const CHAT_ID_KEY = "alfred_ent_live_chat_id_v1";
         const DEFAULT_CATEGORIES = ["Lighting & Power", "Electronics", "Digital Services", "Hardware"];
         const FALLBACK_PRODUCT_IMG = "data:image/svg+xml;utf8," + encodeURIComponent(
             `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="160" viewBox="0 0 300 160">
@@ -501,169 +447,10 @@
         let searchQuery = "";
         let sortOrder = "default";
         let pendingQuickOrderIndex = null;
-        let customerChatId = "";
-        let activeOwnerChatId = "";
 
         try {
             ownerKey = (sessionStorage.getItem(SESSION_OWNER_KEY) || "").trim();
-            customerChatId = localStorage.getItem(CHAT_ID_KEY) || "";
-            if (!customerChatId) {
-                customerChatId = "chat_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
-                localStorage.setItem(CHAT_ID_KEY, customerChatId);
-            }
-        } catch (e) {
-            if (!customerChatId) customerChatId = "chat_guest_" + Date.now().toString(36);
-        }
-
-        function escapeHtml(str) {
-            return String(str || "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;");
-        }
-
-        function renderCustomerChatMessages(messages) {
-            const box = document.getElementById("customer-chat-messages");
-            if (!box) return;
-            if (!Array.isArray(messages) || messages.length === 0) {
-                box.innerHTML = `<p class="text-slate-500">Start a chat below—we'll reply right away!</p>`;
-                return;
-            }
-            box.innerHTML = messages.map(m => {
-                const isOwner = m.sender === "owner";
-                return `
-                    <div class="flex ${isOwner ? "justify-start" : "justify-end"}">
-                        <div class="max-w-[85%] rounded-2xl px-3 py-2 ${isOwner ? "bg-amber-50 border border-amber-600/25 text-slate-900" : "bg-amber-600 text-white"}">
-                            <p class="text-[10px] font-bold opacity-80 mb-0.5">${isOwner ? (m.isAutoReply ? "Alfred Enterprise (Auto-Reply)" : "Alfred Enterprise") : "You"}</p>
-                            <p class="leading-relaxed">${escapeHtml(m.text)}</p>
-                        </div>
-                    </div>
-                `;
-            }).join("");
-            box.scrollTop = box.scrollHeight;
-        }
-
-        async function loadCustomerChat() {
-            try {
-                const res = await fetch(`/.netlify/functions/live-chat?chatId=${encodeURIComponent(customerChatId)}`);
-                if (!res.ok) return;
-                const data = await res.json();
-                renderCustomerChatMessages(data.messages || []);
-            } catch (e) {}
-        }
-
-        async function sendCustomerChatMessage() {
-            const input = document.getElementById("customer-chat-input");
-            const nameInput = document.getElementById("chat-customer-name");
-            const btn = document.getElementById("send-customer-chat-btn");
-            const text = (input && input.value || "").trim();
-            if (!text) return;
-
-            if (btn) btn.disabled = true;
-            try {
-                const res = await fetch("/.netlify/functions/live-chat", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        chatId: customerChatId,
-                        customerName: (nameInput && nameInput.value || "Customer").trim(),
-                        sender: "customer",
-                        text
-                    })
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.error || "Could not send message");
-                if (input) input.value = "";
-                renderCustomerChatMessages(data.messages || []);
-            } catch (err) {
-                alert("Chat error: " + err.message);
-            } finally {
-                if (btn) btn.disabled = false;
-            }
-        }
-
-        async function loadOwnerConversations() {
-            if (!ownerKey) return;
-            const listEl = document.getElementById("owner-chat-threads");
-            if (!listEl) return;
-            try {
-                const res = await fetch("/.netlify/functions/live-chat?all=1", {
-                    headers: getOwnerHeaders()
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.error || "Could not load chats");
-                const convos = Array.isArray(data.conversations) ? data.conversations : [];
-                if (convos.length === 0) {
-                    listEl.innerHTML = `<p class="text-xs text-slate-500">No customer messages yet.</p>`;
-                    return;
-                }
-                listEl.innerHTML = convos.map(c => `
-                    <button type="button" onclick="openOwnerThread('${escapeHtml(c.chatId)}', '${escapeHtml(c.customerName || "Customer")}')" class="w-full text-left bg-white hover:bg-amber-50 border border-slate-200 rounded-xl p-2.5 text-xs transition">
-                        <div class="flex justify-between font-bold text-slate-900">
-                            <span>${escapeHtml(c.customerName || "Customer")}</span>
-                            <span class="text-[10px] text-amber-800">Open</span>
-                        </div>
-                        <p class="text-slate-600 truncate mt-0.5">${escapeHtml(c.lastMessage || "")}</p>
-                    </button>
-                `).join("");
-            } catch (err) {
-                listEl.innerHTML = `<p class="text-xs text-red-600">${escapeHtml(err.message)}</p>`;
-            }
-        }
-
-        async function openOwnerThread(chatId, customerName) {
-            activeOwnerChatId = chatId;
-            const box = document.getElementById("owner-active-thread-box");
-            const label = document.getElementById("owner-active-thread-label");
-            const msgsEl = document.getElementById("owner-thread-messages");
-            if (box) box.classList.remove("hidden");
-            if (label) label.innerText = `Chatting with ${customerName}`;
-            if (msgsEl) msgsEl.innerHTML = `<p class="text-slate-500">Loading messages...</p>`;
-
-            try {
-                const res = await fetch(`/.netlify/functions/live-chat?chatId=${encodeURIComponent(chatId)}`);
-                const data = await res.json().catch(() => ({}));
-                const msgs = Array.isArray(data.messages) ? data.messages : [];
-                if (msgsEl) {
-                    msgsEl.innerHTML = msgs.map(m => `
-                        <div class="rounded-lg p-2 ${m.sender === "owner" ? "bg-emerald-50 text-emerald-950" : "bg-slate-100 text-slate-900"}">
-                            <strong>${m.sender === "owner" ? (m.isAutoReply ? "Auto-Reply" : "You") : escapeHtml(customerName)}:</strong> ${escapeHtml(m.text)}
-                        </div>
-                    `).join("");
-                    msgsEl.scrollTop = msgsEl.scrollHeight;
-                }
-            } catch (e) {}
-        }
-
-        async function sendOwnerChatReply() {
-            if (!activeOwnerChatId) return;
-            const input = document.getElementById("owner-reply-input");
-            const text = (input && input.value || "").trim();
-            if (!text) return;
-
-            try {
-                const res = await fetch("/.netlify/functions/live-chat", {
-                    method: "POST",
-                    headers: getOwnerHeaders(),
-                    body: JSON.stringify({
-                        chatId: activeOwnerChatId,
-                        sender: "owner",
-                        text
-                    })
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.error || "Reply failed");
-                if (input) input.value = "";
-                await openOwnerThread(activeOwnerChatId, "Customer");
-                await loadOwnerConversations();
-                if (activeOwnerChatId === customerChatId) {
-                    renderCustomerChatMessages(data.messages || []);
-                }
-            } catch (err) {
-                alert("Could not send reply: " + err.message);
-            }
-        }
+        } catch (e) {}
 
         function getOwnerHeaders() {
             const cleanKey = (ownerKey || "").trim();
@@ -923,7 +710,6 @@
                 try { sessionStorage.setItem(SESSION_OWNER_KEY, ownerKey); } catch (e) {}
                 panel.classList.remove("hidden");
                 document.getElementById("owner-toggle-btn").innerText = "Owner Mode Active";
-                loadOwnerConversations();
             } else {
                 panel.classList.add("hidden");
                 ownerKey = "";
@@ -1301,7 +1087,6 @@
         document.addEventListener("DOMContentLoaded", () => {
             renderCategoryFilterBar();
             updatePhoneAlertButtonState();
-            loadCustomerChat();
             if ("Notification" in window && Notification.permission === "granted") {
                 registerBackgroundPushSubscription().then(updatePhoneAlertButtonState).catch(() => {});
             }
@@ -1344,7 +1129,6 @@
         if (ownerKey) {
             document.getElementById("owner-panel").classList.remove("hidden");
             document.getElementById("owner-toggle-btn").innerText = "Owner Mode Active";
-            loadOwnerConversations();
         }
 
         loadProfilePicture();
@@ -1358,5 +1142,19 @@
             });
         }
     </script>
+
+    <!--Start of Tawk.to Script-->
+    <script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+    s1.async=true;
+    s1.src='https://embed.tawk.to/6b00d2946c24e43c9e0bc1f7/1k7tjd5n0';
+    s1.charset='UTF-8';
+    s1.setAttribute('crossorigin','*');
+    s0.parentNode.insertBefore(s1,s0);
+    })();
+    </script>
+    <!--End of Tawk.to Script-->
 </body>
 </html>
