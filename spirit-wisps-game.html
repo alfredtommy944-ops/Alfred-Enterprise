@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alfred Enterprise — Spirit Wisps: Storybook Forest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 55%, #060913 100%);
+            color: #fffbeb;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .storybook-panel {
+            background: linear-gradient(180deg, rgba(30, 27, 75, 0.88) 0%, rgba(15, 23, 42, 0.94) 100%);
+            border: 1px solid rgba(251, 191, 36, 0.35);
+            box-shadow: 0 14px 34px rgba(2, 6, 23, 0.55), inset 0 1px 0 rgba(254, 243, 199, 0.18);
+        }
+        .gold-pill {
+            background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
+            color: #1e1b4b;
+            box-shadow: 0 4px 0 #b45309;
+        }
+        .gold-pill:active { transform: translateY(2px); }
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-2.5 sm:p-4">
+
+    <!-- Header -->
+    <header class="w-full max-w-4xl mx-auto storybook-panel rounded-3xl px-3.5 py-2.5 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-11 h-11 rounded-2xl gold-pill flex items-center justify-center font-black text-base shrink-0">
+                ✨
+            </div>
+            <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h1 class="text-sm sm:text-base font-black tracking-wide text-amber-300 truncate">SPIRIT WISPS</h1>
+                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-200 border border-amber-300/35">
+                        Alfred Enterprise
+                    </span>
+                </div>
+                <p class="text-[11px] text-amber-100/75 truncate">Storybook Forest • Collect Wisps &amp; Reach the Sanctuary</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+            <button type="button" onclick="restartLevel()" class="gold-pill text-xs font-black px-3 py-2 rounded-xl">
+                ↻ Restart
+            </button>
+            <a href="./index.html" class="bg-slate-800 hover:bg-slate-700 border border-amber-300/35 text-amber-200 text-xs font-extrabold px-3 py-2 rounded-xl">
+                Store ↗
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Game Stage -->
+    <main class="w-full max-w-4xl mx-auto my-2.5 flex-1 flex flex-col gap-2.5">
+        <section class="storybook-panel rounded-3xl px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-3">
+                <span class="font-bold text-amber-300">✦ Wisps: <span id="wisp-hud" class="mono text-white">0 / 10</span></span>
+                <span class="font-bold text-sky-300">★ Best: <span id="best-hud" class="mono text-white">0</span></span>
+            </div>
+            <p id="status-hud" class="text-amber-100/90 font-semibold">Move, Double-Jump, and Dash through the glowing forest!</p>
+        </section>
+
+        <section class="storybook-panel rounded-3xl p-2 sm:p-3">
+            <div class="w-full aspect-[16/10] min-h-[300px] max-h-[540px]">
+                <canvas id="game-canvas"></canvas>
+            </div>
+        </section>
+
+        <!-- Touch & Keyboard Controls Bar -->
+        <section class="storybook-panel rounded-3xl p-3 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <button id="btn-left" type="button" class="w-12 h-12 rounded-2xl bg-slate-800/90 border border-amber-300/35 text-lg font-black text-amber-200 active:bg-amber-500 active:text-slate-950">◀</button>
+                <button id="btn-right" type="button" class="w-12 h-12 rounded-2xl bg-slate-800/90 border border-amber-300/35 text-lg font-black text-amber-200 active:bg-amber-500 active:text-slate-950">▶</button>
+            </div>
+            <div class="text-[11px] text-amber-100/70 text-center hidden sm:block">
+                A/D or ◀/▶ Move • W/Space/Up Jump (x2) • Shift/E Dash
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="btn-dash" type="button" class="px-3.5 h-12 rounded-2xl bg-sky-500/25 border border-sky-300/50 text-xs font-black text-sky-200 active:bg-sky-400 active:text-slate-950">
+                    ⚡ DASH
+                </button>
+                <button id="btn-jump" type="button" class="px-4 h-12 rounded-2xl gold-pill text-xs font-black">
+                    ▲ JUMP
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const BEST_KEY = "alfred_spirit_wisps_best_v1";
+        const canvas = document.getElementById("game-canvas");
+        const ctx = canvas.getContext("2d");
+
+        const WORLD_W = 800;
+        const WORLD_H = 500;
+
+        let bestScore = 0;
+        try { bestScore = Number(localStorage.getItem(BEST_KEY) || 0); } catch (e) {}
+        document.getElementById("best-hud").textContent = String(bestScore);
+
+        const keys = {};
+        const touchState = { left: false, right: false };
+
+        const platforms = [
+            { x: 0, y: 450, w: 800, h: 50 },
+            { x: 90, y: 375, w: 150, h: 16 },
+            { x: 295, y: 315, w: 165, h: 16 },
+            { x: 520, y: 255, w: 160, h: 16 },
+            { x: 230, y: 195, w: 150, h: 16 },
+            { x: 560, y: 145, w: 185, h: 16 }
+        ];
+
+        const goalPortal = { x: 665, y: 102, r: 26 };
+
+        const initialWisps = [
+            { x: 145, y: 342 }, { x: 205, y: 342 },
+            { x: 345, y: 282 }, { x: 415, y: 282 },
+            { x: 565, y: 222 }, { x: 635, y: 222 },
+            { x: 275, y: 162 }, { x: 335, y: 162 },
+            { x: 430, y: 415 }, { x: 610, y: 112 }
+        ];
+
+        let player, wisps, trail, won, lastTs;
+
+        function resetState() {
+            player = {
+                x: 68, y: 415, vx: 0, vy: 0, r: 14,
+                facing: 1, jumpsLeft: 2, dashTimer: 0, dashCooldown: 0
+            };
+            wisps = initialWisps.map((w, i) => ({
+                x: w.x, y: w.y, r: 8, collected: false, phase: i * 0.7
+            }));
+            trail = [];
+            won = false;
+            document.getElementById("wisp-hud").textContent = `0 / ${wisps.length}`;
+            document.getElementById("status-hud").textContent = "Move, Double-Jump, and Dash through the glowing forest!";
+        }
+
+        function restartLevel() {
+            resetState();
+        }
+
+        function triggerJump() {
+            if (won) return;
+            if (player.jumpsLeft > 0) {
+                player.vy = player.jumpsLeft === 2 ? -470 : -420;
+                player.jumpsLeft -= 1;
+            }
+        }
+
+        function triggerDash() {
+            if (won) return;
+            if (player.dashCooldown <= 0 && player.dashTimer <= 0) {
+                player.dashTimer = 0.16;
+                player.dashCooldown = 0.65;
+                player.vy = 0;
+                player.vx = player.facing * 590;
+            }
+        }
+
+        function bindHoldButton(id, prop) {
+            const el = document.getElementById(id);
+            const setVal = (v) => { touchState[prop] = v; };
+            el.addEventListener("pointerdown", (e) => { e.preventDefault(); setVal(true); });
+            el.addEventListener("pointerup", () => setVal(false));
+            el.addEventListener("pointercancel", () => setVal(false));
+            el.addEventListener("pointerleave", () => setVal(false));
+        }
+
+        bindHoldButton("btn-left", "left");
+        bindHoldButton("btn-right", "right");
+        document.getElementById("btn-jump").addEventListener("pointerdown", (e) => { e.preventDefault(); triggerJump(); });
+        document.getElementById("btn-dash").addEventListener("pointerdown", (e) => { e.preventDefault(); triggerDash(); });
+
+        window.addEventListener("keydown", (e) => {
+            const k = e.key.toLowerCase();
+            keys[k] = true;
+            if (k === "w" || k === "arrowup" || k === " ") {
+                e.preventDefault();
+                triggerJump();
+            }
+            if (k === "shift" || k === "e") {
+                triggerDash();
+            }
+        });
+        window.addEventListener("keyup", (e) => { keys[e.key.toLowerCase()] = false; });
+
+        function update(dt) {
+            if (won) return;
+
+            if (player.dashCooldown > 0) player.dashCooldown = Math.max(0, player.dashCooldown - dt);
+
+            const moveLeft = keys["a"] || keys["arrowleft"] || touchState.left;
+            const moveRight = keys["d"] || keys["arrowright"] || touchState.right;
+
+            if (player.dashTimer > 0) {
+                player.dashTimer = Math.max(0, player.dashTimer - dt);
+            } else {
+                const dir = (moveRight ? 1 : 0) - (moveLeft ? 1 : 0);
+                if (dir !== 0) {
+                    player.facing = dir;
+                    player.vx += dir * 1950 * dt;
+                    player.vx = Math.max(-295, Math.min(295, player.vx));
+                } else {
+                    player.vx *= Math.pow(0.0015, dt);
+                    if (Math.abs(player.vx) < 4) player.vx = 0;
+                }
+                player.vy += 1180 * dt;
+            }
+
+            const prevBottom = player.y + player.r;
+            player.x += player.vx * dt;
+            player.y += player.vy * dt;
+
+            if (player.x < player.r + 10) player.x = player.r + 10;
+            if (player.x > WORLD_W - player.r - 10) player.x = WORLD_W - player.r - 10;
+            if (player.y > WORLD_H + 40) {
+                resetState();
+                return;
+            }
+
+            if (player.vy >= 0) {
+                for (const p of platforms) {
+                    const withinX = player.x + player.r * 0.65 > p.x && player.x - player.r * 0.65 < p.x + p.w;
+                    const crossedTop = prevBottom <= p.y + 8 && player.y + player.r >= p.y;
+                    if (withinX && crossedTop) {
+                        player.y = p.y - player.r;
+                        player.vy = 0;
+                        player.jumpsLeft = 2;
+                    }
+                }
+            }
+
+            trail.push({ x: player.x, y: player.y, alpha: 0.65 });
+            if (trail.length > 14) trail.shift();
+            for (const t of trail) t.alpha *= Math.pow(0.08, dt);
+
+            let collectedCount = 0;
+            for (const w of wisps) {
+                if (w.collected) {
+                    collectedCount += 1;
+                    continue;
+                }
+                w.phase += dt * 3.4;
+                const wy = w.y + Math.sin(w.phase) * 5;
+                if (Math.hypot(player.x - w.x, player.y - wy) < player.r + w.r + 4) {
+                    w.collected = true;
+                    collectedCount += 1;
+                }
+            }
+
+            document.getElementById("wisp-hud").textContent = `${collectedCount} / ${wisps.length}`;
+            if (collectedCount > bestScore) {
+                bestScore = collectedCount;
+                document.getElementById("best-hud").textContent = String(bestScore);
+                try { localStorage.setItem(BEST_KEY, String(bestScore)); } catch (e) {}
+            }
+
+            if (Math.hypot(player.x - goalPortal.x, player.y - goalPortal.y) < player.r + goalPortal.r) {
+                won = true;
+                document.getElementById("status-hud").textContent =
+                    `Sanctuary reached with ${collectedCount}/${wisps.length} wisps! Tap Restart to play again.`;
+            }
+        }
+
+        function draw(nowSec) {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            if (canvas.width !== WORLD_W * dpr) {
+                canvas.width = WORLD_W * dpr;
+                canvas.height = WORLD_H * dpr;
+            }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            // Warm twilight storybook sky
+            const sky = ctx.createLinearGradient(0, 0, 0, WORLD_H);
+            sky.addColorStop(0, "#1e1b4b");
+            sky.addColorStop(0.55, "#312e81");
+            sky.addColorStop(1, "#0f172a");
+            ctx.fillStyle = sky;
+            ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+            // Soft golden sunbeam glow
+            const sun = ctx.createRadialGradient(665, 110, 12, 665, 110, 260);
+            sun.addColorStop(0, "rgba(253, 230, 138, 0.35)");
+            sun.addColorStop(1, "rgba(253, 230, 138, 0)");
+            ctx.fillStyle = sun;
+            ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+            // Background tree silhouettes
+            ctx.fillStyle = "rgba(15, 23, 42, 0.45)";
+            for (let x = 40; x < WORLD_W; x += 115) {
+                ctx.fillRect(x, 80, 18, 380);
+                ctx.beginPath();
+                ctx.arc(x + 9, 95, 46, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Platforms
+            for (const p of platforms) {
+                ctx.fillStyle = "#1e293b";
+                ctx.beginPath();
+                ctx.roundRect(p.x, p.y, p.w, p.h, 8);
+                ctx.fill();
+                ctx.fillStyle = "#fbbf24";
+                ctx.fillRect(p.x + 4, p.y, p.w - 8, 3);
+            }
+
+            // Sanctuary portal
+            const pulse = 1 + Math.sin(nowSec * 4) * 0.08;
+            ctx.save();
+            ctx.translate(goalPortal.x, goalPortal.y);
+            ctx.scale(pulse, pulse);
+            ctx.fillStyle = "rgba(251, 191, 36, 0.22)";
+            ctx.beginPath();
+            ctx.arc(0, 0, goalPortal.r + 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#fde68a";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, goalPortal.r, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+
+            // Wisps
+            for (const w of wisps) {
+                if (w.collected) continue;
+                const wy = w.y + Math.sin(w.phase) * 5;
+                ctx.fillStyle = "rgba(125, 211, 252, 0.25)";
+                ctx.beginPath();
+                ctx.arc(w.x, wy, w.r + 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#e0f2fe";
+                ctx.beginPath();
+                ctx.arc(w.x, wy, w.r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Luminous spirit trail
+            for (const t of trail) {
+                ctx.fillStyle = `rgba(253, 224, 71, ${t.alpha * 0.45})`;
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, player.r * 0.72, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Spirit character
+            ctx.fillStyle = "rgba(251, 191, 36, 0.28)";
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.r + 9, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#fffbeb";
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#1e1b4b";
+            ctx.beginPath();
+            ctx.arc(player.x + player.facing * 4, player.y - 2, 2.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function loop(ts) {
+            if (!lastTs) lastTs = ts;
+            const dt = Math.min(0.033, (ts - lastTs) / 1000);
+            lastTs = ts;
+            update(dt);
+            draw(ts / 1000);
+            requestAnimationFrame(loop);
+        }
+
+        resetState();
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>
