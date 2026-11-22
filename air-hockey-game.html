@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alfred Enterprise — AE Air Hockey Smash</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 50% 0%, #2563eb 0%, #1d4ed8 45%, #0f172a 100%);
+            color: #ffffff;
+            touch-action: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .arcade-title {
+            text-shadow: 0 3px 0 rgba(15, 23, 42, 0.55), 0 0 18px rgba(250, 204, 21, 0.35);
+        }
+        .glossy-panel {
+            background: linear-gradient(180deg, rgba(30, 58, 138, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+            border: 2px solid rgba(147, 197, 253, 0.35);
+            box-shadow: 0 12px 28px rgba(2, 6, 23, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+        }
+        .tile-gold {
+            background: linear-gradient(180deg, #fde047 0%, #eab308 100%);
+            border: 2px solid #fef9c3;
+            box-shadow: 0 4px 0 #a16207, 0 8px 16px rgba(2, 6, 23, 0.35);
+            color: #0f172a;
+        }
+        .tile-blue {
+            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+            border: 2px solid #bae6fd;
+            box-shadow: 0 4px 0 #0369a1, 0 8px 16px rgba(2, 6, 23, 0.35);
+            color: #ffffff;
+        }
+        .btn-press { transition: transform 0.1s ease, filter 0.15s ease; }
+        .btn-press:active { transform: translateY(2px); }
+        #rink-wrap {
+            width: 100%;
+            max-width: 440px;
+            aspect-ratio: 3 / 4.2;
+            margin: 0 auto;
+        }
+        #hockey-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 22px;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-2.5 sm:p-4">
+
+    <!-- Top Header -->
+    <header class="w-full max-w-4xl mx-auto glossy-panel rounded-3xl px-3.5 py-2.5 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-b from-amber-300 via-amber-400 to-orange-500 border-2 border-amber-100 flex items-center justify-center text-slate-950 font-black text-base shadow-lg shrink-0">
+                AE
+            </div>
+            <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h1 class="text-sm sm:text-base font-black tracking-wide text-amber-300 arcade-title truncate">AIR HOCKEY SMASH</h1>
+                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-sky-400/20 text-sky-200 border border-sky-300/40">
+                        IDA, Kenema
+                    </span>
+                </div>
+                <p class="text-[11px] text-sky-100/80 truncate">First to 7 Goals • Drag Paddle to Strike</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+            <button id="pause-btn" type="button" onclick="togglePause()"
+                class="btn-press bg-sky-500/25 hover:bg-sky-500/35 border border-sky-300/50 text-sky-100 text-xs font-extrabold px-2.5 py-2 rounded-xl">
+                ⏸ Pause
+            </button>
+            <button id="mute-btn" type="button" onclick="toggleMute()" aria-label="Toggle Sound"
+                class="btn-press bg-slate-900/70 hover:bg-slate-800 border border-sky-300/30 text-white px-2.5 py-2 rounded-xl text-xs font-bold">
+                🔊
+            </button>
+            <a href="./index.html"
+                class="btn-press tile-gold text-xs font-black px-3 py-2 rounded-xl flex items-center gap-1">
+                <span>Store</span>
+                <span>↗</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="w-full max-w-4xl mx-auto my-2 flex-1 flex flex-col gap-2.5">
+
+        <!-- Mode & Difficulty Controls -->
+        <section class="glossy-panel rounded-3xl p-3 grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end">
+            <div>
+                <label for="hockey-mode" class="block text-[10px] uppercase tracking-wider text-sky-200 font-extrabold mb-1">
+                    Match Mode
+                </label>
+                <select id="hockey-mode" onchange="resetMatch()"
+                    class="w-full bg-slate-950/90 border-2 border-sky-400/40 rounded-2xl px-3 py-2 text-xs font-extrabold text-emerald-300 outline-none">
+                    <option value="ai" selected>🤖 1P VS Computer</option>
+                    <option value="pvp">🤝 2P Pass &amp; Play</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="hockey-level" class="block text-[10px] uppercase tracking-wider text-sky-200 font-extrabold mb-1">
+                    AI Speed
+                </label>
+                <select id="hockey-level" onchange="resetMatch()"
+                    class="w-full bg-slate-950/90 border-2 border-sky-400/40 rounded-2xl px-3 py-2 text-xs font-extrabold text-amber-300 outline-none">
+                    <option value="chill">Chill</option>
+                    <option value="pro" selected>Pro</option>
+                    <option value="boss">Boss</option>
+                </select>
+            </div>
+
+            <button type="button" onclick="resetMatch()"
+                class="btn-press tile-gold w-full font-black text-xs py-2.5 px-4 rounded-2xl">
+                🔄 New Match
+            </button>
+        </section>
+
+        <!-- Scoreboard -->
+        <section class="glossy-panel rounded-3xl px-4 py-2.5 flex items-center justify-between gap-3">
+            <div class="text-center bg-slate-950/80 border border-sky-300/40 rounded-2xl px-3.5 py-1.5 min-w-[82px]">
+                <span id="top-label" class="block text-[10px] uppercase text-sky-300 font-bold">CPU</span>
+                <span id="top-score" class="mono text-lg font-black text-white">0</span>
+            </div>
+
+            <div class="text-center flex-1">
+                <p id="hockey-status" class="text-xs sm:text-sm font-black text-amber-300">Drag bottom gold paddle to hit the puck!</p>
+                <p class="text-[10px] text-sky-200/80 mono">Wins: <span id="wins-count">0</span> • Streak: <span id="streak-count">0</span></p>
+            </div>
+
+            <div class="text-center bg-slate-950/80 border border-amber-300/45 rounded-2xl px-3.5 py-1.5 min-w-[82px]">
+                <span id="bottom-label" class="block text-[10px] uppercase text-amber-300 font-bold">YOU</span>
+                <span id="bottom-score" class="mono text-lg font-black text-amber-300">0</span>
+            </div>
+        </section>
+
+        <!-- Air Hockey Rink -->
+        <section class="glossy-panel rounded-3xl p-2.5 sm:p-4">
+            <div id="rink-wrap">
+                <canvas id="hockey-canvas"></canvas>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <section class="glossy-panel rounded-2xl px-3.5 py-2.5 text-[11px] text-sky-100/85 flex flex-wrap items-center justify-between gap-2">
+            <span>🏒 <strong class="text-amber-300">Alfred Enterprise Arcade</strong> • IDA, Kenema City</span>
+            <a href="https://wa.me/23276655025?text=Hello%20Alfred%20Enterprise%20(IDA%2C%20Kenema)!%20Playing%20Air%20Hockey%20Smash%20on%20your%20website."
+                target="_blank" rel="noopener noreferrer" class="text-amber-300 font-extrabold underline">
+                💬 WhatsApp +23276655025
+            </a>
+        </section>
+    </main>
+
+    <!-- Match End Modal -->
+    <div id="end-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-sm glossy-panel border-2 border-amber-300 rounded-3xl p-5 space-y-4 text-center">
+            <div class="w-14 h-14 mx-auto rounded-2xl tile-gold flex items-center justify-center text-3xl">🏆</div>
+            <p id="end-title" class="text-xl font-black text-amber-300 arcade-title">YOU WIN!</p>
+            <p id="end-sub" class="text-xs text-sky-100/90">Final Score: 7 - 3</p>
+            <div class="space-y-2 pt-1">
+                <button type="button" onclick="closeEndModal(); resetMatch();" class="btn-press tile-gold w-full font-black text-xs py-3 rounded-2xl">
+                    Play Again
+                </button>
+                <a href="./index.html" class="btn-press tile-blue w-full font-black text-xs py-2.5 rounded-2xl block">
+                    Back to Store
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STATS_KEY = "alfred_hockey_stats_v1";
+        const WIN_GOAL = 7;
+        const W = 420;
+        const H = 588;
+
+        const canvas = document.getElementById("hockey-canvas");
+        const ctx = canvas.getContext("2d");
+
+        let audioCtx = null;
+        let muted = false;
+        let paused = false;
+        let rafId = null;
+        let lastTime = 0;
+
+        const stats = { wins: 0, streak: 0 };
+        try {
+            const saved = JSON.parse(localStorage.getItem(STATS_KEY) || "{}");
+            if (typeof saved.wins === "number") stats.wins = saved.wins;
+            if (typeof saved.streak === "number") stats.streak = saved.streak;
+        } catch (e) {}
+
+        const state = {
+            mode: "ai",
+            level: "pro",
+            topScore: 0,
+            bottomScore: 0,
+            over: false,
+            goalFlash: 0,
+            puck: { x: W / 2, y: H / 2, vx: 0, vy: 0, r: 15 },
+            p1: { x: W / 2, y: H - 86, vx: 0, vy: 0, r: 28, pointerId: null },
+            p2: { x: W / 2, y: 86, vx: 0, vy: 0, r: 28, pointerId: null },
+            keys: {}
+        };
+
+        function saveStats() {
+            try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) {}
+            document.getElementById("wins-count").textContent = String(stats.wins);
+            document.getElementById("streak-count").textContent = String(stats.streak);
+        }
+
+        function soundBeep(freq, dur, type = "triangle", vol = 0.07) {
+            if (muted) return;
+            try {
+                if (!audioCtx) {
+                    const Ctor = window.AudioContext || window.webkitAudioContext;
+                    if (Ctor) audioCtx = new Ctor();
+                }
+                if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+                if (!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + dur);
+            } catch (e) {}
+        }
+
+        function toggleMute() {
+            muted = !muted;
+            document.getElementById("mute-btn").textContent = muted ? "🔇" : "🔊";
+        }
+
+        function togglePause() {
+            if (state.over) return;
+            paused = !paused;
+            document.getElementById("pause-btn").textContent = paused ? "▶ Resume" : "⏸ Pause";
+            document.getElementById("hockey-status").textContent = paused ? "Match paused" : "Match live — strike the puck!";
+        }
+
+        function closeEndModal() {
+            document.getElementById("end-modal").classList.add("hidden");
+        }
+
+        function servePuck(dirY = 1) {
+            state.puck.x = W / 2;
+            state.puck.y = H / 2;
+            const angle = (Math.random() * 0.65 - 0.325);
+            const speed = 285;
+            state.puck.vx = Math.sin(angle) * speed;
+            state.puck.vy = Math.cos(angle) * speed * dirY;
+        }
+
+        function resetMatch() {
+            state.mode = document.getElementById("hockey-mode").value;
+            state.level = document.getElementById("hockey-level").value;
+            state.topScore = 0;
+            state.bottomScore = 0;
+            state.over = false;
+            state.goalFlash = 0;
+            paused = false;
+            document.getElementById("pause-btn").textContent = "⏸ Pause";
+
+            document.getElementById("top-label").textContent = state.mode === "ai" ? "CPU" : "P2 (TOP)";
+            document.getElementById("bottom-label").textContent = state.mode === "ai" ? "YOU" : "P1 (BOT)";
+            document.getElementById("top-score").textContent = "0";
+            document.getElementById("bottom-score").textContent = "0";
+
+            state.p1.x = W / 2;
+            state.p1.y = H - 86;
+            state.p1.vx = 0;
+            state.p1.vy = 0;
+            state.p1.pointerId = null;
+
+            state.p2.x = W / 2;
+            state.p2.y = 86;
+            state.p2.vx = 0;
+            state.p2.vy = 0;
+            state.p2.pointerId = null;
+
+            servePuck(-1);
+            document.getElementById("hockey-status").textContent =
+                state.mode === "ai" ? "Drag bottom gold paddle to hit the puck!" : "2P Mode: Bottom = P1, Top = P2";
+        }
+
+        function clampPaddle(pad, isBottom) {
+            const minX = 24 + pad.r;
+            const maxX = W - 24 - pad.r;
+            pad.x = Math.max(minX, Math.min(maxX, pad.x));
+
+            if (isBottom) {
+                const minY = H / 2 + 12 + pad.r;
+                const maxY = H - 24 - pad.r;
+                pad.y = Math.max(minY, Math.min(maxY, pad.y));
+            } else {
+                const minY = 24 + pad.r;
+                const maxY = H / 2 - 12 - pad.r;
+                pad.y = Math.max(minY, Math.min(maxY, pad.y));
+            }
+        }
+
+        function toCanvasCoords(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: ((clientX - rect.left) / rect.width) * W,
+                y: ((clientY - rect.top) / rect.height) * H
+            };
+        }
+
+        canvas.addEventListener("pointerdown", (e) => {
+            if (paused || state.over) return;
+            canvas.setPointerCapture(e.pointerId);
+            const pt = toCanvasCoords(e.clientX, e.clientY);
+
+            if (state.mode === "ai") {
+                state.p1.pointerId = e.pointerId;
+                state.p1.x = pt.x;
+                state.p1.y = pt.y;
+                clampPaddle(state.p1, true);
+            } else {
+                if (pt.y >= H / 2) {
+                    state.p1.pointerId = e.pointerId;
+                    state.p1.x = pt.x;
+                    state.p1.y = pt.y;
+                    clampPaddle(state.p1, true);
+                } else {
+                    state.p2.pointerId = e.pointerId;
+                    state.p2.x = pt.x;
+                    state.p2.y = pt.y;
+                    clampPaddle(state.p2, false);
+                }
+            }
+        });
+
+        canvas.addEventListener("pointermove", (e) => {
+            if (paused || state.over) return;
+            const pt = toCanvasCoords(e.clientX, e.clientY);
+
+            if (state.p1.pointerId === e.pointerId) {
+                const prevX = state.p1.x;
+                const prevY = state.p1.y;
+                state.p1.x = pt.x;
+                state.p1.y = pt.y;
+                clampPaddle(state.p1, true);
+                state.p1.vx = (state.p1.x - prevX) * 45;
+                state.p1.vy = (state.p1.y - prevY) * 45;
+            } else if (state.mode === "pvp" && state.p2.pointerId === e.pointerId) {
+                const prevX = state.p2.x;
+                const prevY = state.p2.y;
+                state.p2.x = pt.x;
+                state.p2.y = pt.y;
+                clampPaddle(state.p2, false);
+                state.p2.vx = (state.p2.x - prevX) * 45;
+                state.p2.vy = (state.p2.y - prevY) * 45;
+            }
+        });
+
+        function releasePointer(e) {
+            if (state.p1.pointerId === e.pointerId) state.p1.pointerId = null;
+            if (state.p2.pointerId === e.pointerId) state.p2.pointerId = null;
+        }
+        canvas.addEventListener("pointerup", releasePointer);
+        canvas.addEventListener("pointercancel", releasePointer);
+
+        window.addEventListener("keydown", (e) => { state.keys[e.key.toLowerCase()] = true; });
+        window.addEventListener("keyup", (e) => { state.keys[e.key.toLowerCase()] = false; });
+
+        function collidePuckPaddle(pad) {
+            const dx = state.puck.x - pad.x;
+            const dy = state.puck.y - pad.y;
+            const dist = Math.hypot(dx, dy);
+            const minDist = state.puck.r + pad.r;
+            if (dist > 0 && dist < minDist) {
+                const nx = dx / dist;
+                const ny = dy / dist;
+                state.puck.x = pad.x + nx * (minDist + 0.5);
+                state.puck.y = pad.y + ny * (minDist + 0.5);
+
+                const relVx = state.puck.vx - pad.vx * 0.45;
+                const relVy = state.puck.vy - pad.vy * 0.45;
+                const dot = relVx * nx + relVy * ny;
+                if (dot < 0) {
+                    state.puck.vx -= 1.9 * dot * nx;
+                    state.puck.vy -= 1.9 * dot * ny;
+                }
+
+                const speed = Math.min(720, Math.max(310, Math.hypot(state.puck.vx, state.puck.vy) * 1.06));
+                const mag = Math.hypot(state.puck.vx, state.puck.vy) || 1;
+                state.puck.vx = (state.puck.vx / mag) * speed;
+                state.puck.vy = (state.puck.vy / mag) * speed;
+                soundBeep(520, 0.06, "triangle", 0.08);
+            }
+        }
+
+        function handleGoal(winnerSide) {
+            state.goalFlash = 0.45;
+            if (winnerSide === "bottom") {
+                state.bottomScore += 1;
+                document.getElementById("bottom-score").textContent = String(state.bottomScore);
+                soundBeep(660, 0.14, "triangle", 0.1);
+                document.getElementById("hockey-status").textContent = "GOAL! Bottom scores!";
+            } else {
+                state.topScore += 1;
+                document.getElementById("top-score").textContent = String(state.topScore);
+                soundBeep(280, 0.16, "sawtooth", 0.08);
+                document.getElementById("hockey-status").textContent = "GOAL! Top scores!";
+            }
+
+            if (state.bottomScore >= WIN_GOAL || state.topScore >= WIN_GOAL) {
+                state.over = true;
+                const bottomWon = state.bottomScore >= WIN_GOAL;
+                if (state.mode === "ai") {
+                    if (bottomWon) {
+                        stats.wins += 1;
+                        stats.streak += 1;
+                    } else {
+                        stats.streak = 0;
+                    }
+                    saveStats();
+                }
+                document.getElementById("end-title").textContent =
+                    state.mode === "ai" ? (bottomWon ? "YOU WIN!" : "CPU WINS!") : (bottomWon ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!");
+                document.getElementById("end-sub").textContent =
+                    `Final Score: ${state.bottomScore} - ${state.topScore} • Alfred Enterprise (IDA, Kenema)`;
+                document.getElementById("end-modal").classList.remove("hidden");
+                return;
+            }
+
+            servePuck(winnerSide === "bottom" ? -1 : 1);
+        }
+
+        function update(dt) {
+            if (paused || state.over) return;
+            if (state.goalFlash > 0) state.goalFlash = Math.max(0, state.goalFlash - dt);
+
+            const keySpeed = 340;
+            if (state.keys["arrowleft"] || state.keys["a"]) state.p1.x -= keySpeed * dt;
+            if (state.keys["arrowright"] || state.keys["d"]) state.p1.x += keySpeed * dt;
+            if (state.keys["arrowup"] || state.keys["w"]) state.p1.y -= keySpeed * dt;
+            if (state.keys["arrowdown"] || state.keys["s"]) state.p1.y += keySpeed * dt;
+            clampPaddle(state.p1, true);
+
+            if (state.mode === "ai") {
+                const aiSpeed = state.level === "chill" ? 175 : state.level === "boss" ? 340 : 255;
+                const targetX = state.puck.y < H * 0.58 ? state.puck.x : W / 2;
+                const targetY = state.puck.y < H * 0.5 ? Math.max(68, Math.min(H * 0.36, state.puck.y - 24)) : 86;
+                const dx = targetX - state.p2.x;
+                const dy = targetY - state.p2.y;
+                state.p2.vx = Math.max(-aiSpeed, Math.min(aiSpeed, dx * 7));
+                state.p2.vy = Math.max(-aiSpeed, Math.min(aiSpeed, dy * 7));
+                state.p2.x += state.p2.vx * dt;
+                state.p2.y += state.p2.vy * dt;
+                clampPaddle(state.p2, false);
+            } else {
+                clampPaddle(state.p2, false);
+            }
+
+            state.puck.x += state.puck.vx * dt;
+            state.puck.y += state.puck.vy * dt;
+
+            // Gentle drag
+            state.puck.vx *= Math.pow(0.992, dt * 60);
+            state.puck.vy *= Math.pow(0.992, dt * 60);
+
+            // Side wall bounce
+            const leftWall = 24 + state.puck.r;
+            const rightWall = W - 24 - state.puck.r;
+            if (state.puck.x < leftWall) {
+                state.puck.x = leftWall;
+                state.puck.vx = Math.abs(state.puck.vx);
+                soundBeep(390, 0.04, "sine", 0.05);
+            } else if (state.puck.x > rightWall) {
+                state.puck.x = rightWall;
+                state.puck.vx = -Math.abs(state.puck.vx);
+                soundBeep(390, 0.04, "sine", 0.05);
+            }
+
+            collidePuckPaddle(state.p1);
+            collidePuckPaddle(state.p2);
+
+            const goalHalf = 68;
+            const inGoalMouth = Math.abs(state.puck.x - W / 2) < goalHalf;
+
+            // Top goal line
+            if (state.puck.y - state.puck.r < 24) {
+                if (inGoalMouth) {
+                    handleGoal("bottom");
+                } else {
+                    state.puck.y = 24 + state.puck.r;
+                    state.puck.vy = Math.abs(state.puck.vy);
+                    soundBeep(390, 0.04, "sine", 0.05);
+                }
+            }
+
+            // Bottom goal line
+            if (state.puck.y + state.puck.r > H - 24) {
+                if (inGoalMouth) {
+                    handleGoal("top");
+                } else {
+                    state.puck.y = H - 24 - state.puck.r;
+                    state.puck.vy = -Math.abs(state.puck.vy);
+                    soundBeep(390, 0.04, "sine", 0.05);
+                }
+            }
+        }
+
+        function draw() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            if (canvas.width !== W * dpr) {
+                canvas.width = W * dpr;
+                canvas.height = H * dpr;
+            }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            // Rink surface
+            ctx.fillStyle = state.goalFlash > 0 ? "#1e3a8a" : "#0b1736";
+            ctx.fillRect(0, 0, W, H);
+
+            // Border rail
+            ctx.strokeStyle = "#38bdf8";
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.roundRect(18, 18, W - 36, H - 36, 20);
+            ctx.stroke();
+
+            // Center line & circle
+            ctx.strokeStyle = "rgba(147, 197, 253, 0.35)";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(22, H / 2);
+            ctx.lineTo(W - 22, H / 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(W / 2, H / 2, 54, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Goal mouths
+            ctx.strokeStyle = "#facc15";
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(W / 2 - 68, 22);
+            ctx.lineTo(W / 2 + 68, 22);
+            ctx.moveTo(W / 2 - 68, H - 22);
+            ctx.lineTo(W / 2 + 68, H - 22);
+            ctx.stroke();
+
+            // Top paddle (Cyan/Blue)
+            ctx.fillStyle = "#0284c7";
+            ctx.beginPath();
+            ctx.arc(state.p2.x, state.p2.y, state.p2.r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#e0f2fe";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.fillStyle = "#bae6fd";
+            ctx.beginPath();
+            ctx.arc(state.p2.x, state.p2.y, state.p2.r * 0.42, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bottom paddle (Gold/Amber)
+            ctx.fillStyle = "#eab308";
+            ctx.beginPath();
+            ctx.arc(state.p1.x, state.p1.y, state.p1.r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#fef9c3";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.fillStyle = "#fef08a";
+            ctx.beginPath();
+            ctx.arc(state.p1.x, state.p1.y, state.p1.r * 0.42, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Puck
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(state.puck.x, state.puck.y, state.puck.r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#0f172a";
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+        }
+
+        function loop(now) {
+            const dt = Math.min(0.033, (now - (lastTime || now)) / 1000);
+            lastTime = now;
+            update(dt);
+            draw();
+            rafId = requestAnimationFrame(loop);
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            saveStats();
+            resetMatch();
+            rafId = requestAnimationFrame(loop);
+        });
+    </script>
+</body>
+</html>
