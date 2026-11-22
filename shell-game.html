@@ -1,0 +1,1567 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alfred Enterprise — 3-Cup Shell Game &amp; AI Vision Tracker</title>
+    <!-- Tailwind CSS for responsive mobile-first styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Warm dark studio, wood/felt table, gold & emerald storefront theme */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 50% 0%, #2a1c12 0%, #140f0c 50%, #070504 100%);
+            color: #fafaf9;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .gold-text {
+            background: linear-gradient(90deg, #fef08a, #f59e0b, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .btn-press {
+            transition: transform 0.1s ease, filter 0.15s ease, box-shadow 0.15s ease;
+        }
+        .btn-press:active {
+            transform: translateY(2px);
+        }
+        .btn-press:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+        /* Explicit minimum height + aspect ratio so canvas never collapses on mobile */
+        #canvas-stage {
+            min-height: 290px;
+            height: clamp(290px, 46vh, 410px);
+            background-color: #140e0a;
+        }
+        #shell-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            min-height: 290px;
+            touch-action: manipulation;
+        }
+        .hud-scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(16, 185, 129, 0) 50%,
+                rgba(16, 185, 129, 0.05) 50%
+            );
+            background-size: 100% 4px;
+        }
+        @keyframes turboPulse {
+            0% { opacity: 0.85; }
+            100% { opacity: 0; }
+        }
+        .turbo-flash {
+            animation: turboPulse 0.4s ease-out forwards;
+        }
+        @keyframes modalPop {
+            0% { opacity: 0; transform: scale(0.92); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .modal-pop {
+            animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-2.5 sm:p-4">
+
+    <!-- Top Brand Header -->
+    <header class="w-full max-w-4xl mx-auto bg-stone-900/95 border border-amber-500/30 rounded-2xl px-3.5 py-2.5 shadow-2xl backdrop-blur flex flex-col sm:flex-row items-center justify-between gap-2.5">
+        <div class="flex items-center justify-between w-full sm:w-auto gap-3">
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-emerald-600 flex items-center justify-center text-stone-950 font-black text-base shadow-lg">
+                    AE
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-sm sm:text-base font-black tracking-tight gold-text">ALFRED ENTERPRISE</h1>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                            IDA, Kenema
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-stone-400">3-Cup Shell Game &amp; AI Vision Tracker</p>
+                </div>
+            </div>
+
+            <a href="https://alfred-enterprise-store.netlify.app" target="_blank" rel="noopener noreferrer"
+                class="sm:hidden btn-press bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-bold px-2.5 py-1.5 rounded-xl">
+                Store ↗
+            </a>
+        </div>
+
+        <!-- Scoreboard, Streak, Vouchers, Mute & Store Link -->
+        <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+            <div class="flex items-center gap-2 bg-stone-950/90 border border-stone-800 rounded-xl px-2.5 py-1">
+                <div class="text-center pr-2 border-r border-stone-800">
+                    <span class="block text-[9px] uppercase tracking-wider text-stone-400">Wins</span>
+                    <span id="stat-wins" class="text-xs sm:text-sm font-extrabold text-amber-400 mono">0</span>
+                </div>
+                <div class="text-center pr-2 border-r border-stone-800">
+                    <span class="block text-[9px] uppercase tracking-wider text-stone-400">Streak</span>
+                    <span id="stat-streak" class="text-xs sm:text-sm font-extrabold text-emerald-400 mono">0</span>
+                </div>
+                <div class="text-center">
+                    <span class="block text-[9px] uppercase tracking-wider text-stone-400">Acc</span>
+                    <span id="stat-acc" class="text-xs sm:text-sm font-extrabold text-stone-200 mono">--%</span>
+                </div>
+            </div>
+
+            <button id="vouchers-btn" type="button" onclick="openVouchersModal()"
+                class="btn-press bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/40 text-amber-300 text-xs font-extrabold px-2.5 py-2 rounded-xl flex items-center gap-1">
+                <span>🎟️</span>
+                <span id="voucher-count" class="mono">0</span>
+            </button>
+
+            <button id="mute-btn" type="button" onclick="toggleMute()" aria-label="Toggle Sound Effects"
+                class="btn-press bg-stone-800 hover:bg-stone-700 border border-stone-700 text-stone-200 px-2.5 py-2 rounded-xl text-xs font-bold">
+                🔊
+            </button>
+
+            <a href="https://alfred-enterprise-store.netlify.app" target="_blank" rel="noopener noreferrer"
+                class="hidden sm:inline-flex btn-press bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs font-black px-3 py-2 rounded-xl shadow items-center gap-1">
+                <span>Store</span>
+                <span>↗</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-4xl mx-auto my-2.5 flex-1 flex flex-col gap-2.5">
+
+        <!-- Instructions & 3-Win Streak Reward Tracker -->
+        <section class="bg-stone-900/90 border border-amber-500/25 rounded-2xl px-3.5 py-2.5 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs">
+            <div class="text-stone-200 leading-relaxed">
+                <strong class="text-amber-300">How to Play:</strong>
+                Tap <strong class="text-white">Start Round</strong> to see the golden ball under a cup, follow the swaps, then <strong class="text-amber-300">tap a cup</strong> (#1, #2, or #3) to pick!
+                Win <strong class="text-emerald-300">3 in a row</strong> (with <strong class="text-white">AI Demo OFF</strong>) to unlock an <strong class="text-amber-300">NLe Discount Code</strong>.
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <span id="streak-pip-1" class="w-3 h-3 rounded-full bg-stone-800 border border-stone-600"></span>
+                <span id="streak-pip-2" class="w-3 h-3 rounded-full bg-stone-800 border border-stone-600"></span>
+                <span id="streak-pip-3" class="w-3 h-3 rounded-full bg-stone-800 border border-stone-600"></span>
+                <span id="streak-reward-label" class="mono text-[11px] font-bold text-emerald-300 ml-1">0/3 • NLe 30 + Del</span>
+            </div>
+        </section>
+
+        <!-- Presets & AI Vision Demo Switch -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            <div class="bg-stone-900/90 border border-stone-800 rounded-2xl p-3 flex items-center justify-between gap-2.5 shadow-lg">
+                <div class="flex-1">
+                    <label for="speed-select" class="block text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-1">
+                        Speed Preset
+                    </label>
+                    <select id="speed-select" onchange="syncSettings()"
+                        class="w-full bg-stone-950 border border-stone-700 focus:border-amber-400 rounded-xl px-2.5 py-1.5 text-xs font-bold text-amber-300 outline-none">
+                        <option value="slow">Slow (NLe 15 OFF)</option>
+                        <option value="medium">Medium (NLe 15 OFF)</option>
+                        <option value="fast">Fast (NLe 30 + Delivery)</option>
+                        <option value="pro">Pro (NLe 30 + Delivery)</option>
+                        <option value="turbo">⚡ Turbo (NLe 30 + Delivery)</option>
+                        <option value="ultraturno" selected>🔥 Ultra Turbo (NLe 30 + Delivery)</option>
+                    </select>
+                </div>
+
+                <div class="w-28">
+                    <label for="swaps-select" class="block text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-1">
+                        Swaps
+                    </label>
+                    <select id="swaps-select" onchange="syncSettings()"
+                        class="w-full bg-stone-950 border border-stone-700 focus:border-amber-400 rounded-xl px-2.5 py-1.5 text-xs font-bold text-stone-200 outline-none">
+                        <option value="6">6 Swaps</option>
+                        <option value="10">10 Swaps</option>
+                        <option value="14">14 Swaps</option>
+                        <option value="18">18 Swaps</option>
+                        <option value="20">⚡ 20 Swaps</option>
+                        <option value="24" selected>🔥 24 Swaps</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="bg-stone-900/90 border border-emerald-500/30 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-lg">
+                <div class="space-y-0.5">
+                    <div class="flex items-center gap-1.5">
+                        <span id="ai-dot" class="w-2 h-2 rounded-full bg-stone-500"></span>
+                        <span class="text-xs font-extrabold text-stone-100">AI Vision Tracker</span>
+                        <span id="ai-reward-badge"
+                            class="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/35">
+                            Rewards ON
+                        </span>
+                    </div>
+                    <p id="ai-desc" class="text-[11px] text-stone-400 leading-tight">
+                        OFF: Earn streak rewards. ON: Watch live target lock box &amp; motion trail.
+                    </p>
+                </div>
+
+                <button id="ai-toggle-btn" type="button" onclick="toggleAIDemo()" role="switch" aria-checked="false"
+                    class="btn-press shrink-0 px-3 py-2 rounded-xl font-extrabold text-xs bg-stone-800 border border-stone-600 text-stone-200">
+                    AI Demo: OFF
+                </button>
+            </div>
+        </section>
+
+        <!-- Guaranteed Visible Canvas Stage -->
+        <section id="canvas-stage" class="relative w-full rounded-3xl overflow-hidden border-2 border-amber-500/40 shadow-2xl">
+            <div id="ai-scanlines" class="hidden absolute inset-0 pointer-events-none hud-scanlines z-10"></div>
+            <div id="turbo-flash-layer" class="hidden absolute inset-0 pointer-events-none bg-amber-300/25 border-2 border-amber-300/70 rounded-3xl z-10"></div>
+
+            <!-- Top Status Pill & AI Telemetry Readout -->
+            <div class="absolute top-3 inset-x-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+                <div id="status-readout"
+                    class="bg-stone-950/95 border border-amber-400/50 backdrop-blur px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-bold text-amber-300 shadow">
+                    Cups #1, #2, #3 ready! Tap "Start Round" or tap a cup.
+                </div>
+
+                <div id="ai-telemetry-pill"
+                    class="hidden bg-stone-950/95 border border-emerald-400/50 backdrop-blur px-3 py-1 rounded-full text-[11px] mono text-emerald-300 shadow flex items-center gap-2">
+                    <span id="ai-lock-readout">LOCK: READY</span>
+                    <span class="text-stone-600">|</span>
+                    <span id="ai-coord-readout">X:0 Y:0</span>
+                </div>
+            </div>
+
+            <!-- Interactive 60fps HTML5 Canvas -->
+            <canvas id="shell-canvas"></canvas>
+
+            <!-- Bottom Swap & Mode Telemetry Strip -->
+            <div class="absolute bottom-2.5 inset-x-3 z-20 flex items-center justify-between text-[10px] sm:text-[11px] pointer-events-none">
+                <span id="swap-status-badge" class="mono bg-stone-950/90 text-stone-200 px-2.5 py-1 rounded-lg border border-stone-800">
+                    PHASE: IDLE • SWAPS: 0 / 24
+                </span>
+                <span id="prize-status-badge" class="mono bg-stone-950/90 text-amber-300 px-2.5 py-1 rounded-lg border border-stone-800">
+                    PRIZE: NLe 30 + FREE DELIVERY
+                </span>
+            </div>
+        </section>
+
+        <!-- Primary Action Row Outside Canvas (Includes Reset / Show Cups) -->
+        <section class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2.5">
+            <button id="start-btn" type="button" onclick="startRound()"
+                class="btn-press flex-1 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-stone-950 font-black text-sm py-3.5 px-5 rounded-2xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
+                <span>🎲</span>
+                <span id="start-btn-label">Start Round</span>
+            </button>
+
+            <button id="reset-cups-btn" type="button" onclick="resetAndShowCups()"
+                class="btn-press bg-stone-800 hover:bg-stone-700 border border-amber-400/35 text-amber-200 font-extrabold text-xs sm:text-sm py-3.5 px-4 rounded-2xl flex items-center justify-center gap-1.5">
+                <span>🔄</span>
+                <span>Reset / Show Cups</span>
+            </button>
+
+            <a href="https://wa.me/23276655025?text=Hello%20Alfred%20Enterprise%20(IDA%2C%20Kenema)!%20I%20am%20playing%20your%203-Cup%20Shell%20Game."
+                target="_blank" rel="noopener noreferrer"
+                class="btn-press bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-400/40 text-emerald-300 font-bold text-xs sm:text-sm py-3.5 px-4 rounded-2xl flex items-center justify-center gap-1.5">
+                <span>💬</span>
+                <span>WhatsApp +23276655025</span>
+            </a>
+        </section>
+
+        <!-- Storefront Info Bar -->
+        <section class="bg-stone-900/80 border border-stone-800 rounded-2xl px-3.5 py-2 text-[11px] text-stone-400 flex flex-wrap items-center justify-between gap-2">
+            <span>📍 <strong class="text-stone-200">Alfred Enterprise</strong> • IDA, Kenema City, Sierra Leone</span>
+            <span>💳 Orange Money • QMoney • AfriMoney • Cash on Delivery</span>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-4xl mx-auto text-center text-[11px] text-stone-500 pt-1">
+        Alfred Enterprise Storefront Game • Instant Discount Codes for Kenema Orders
+    </footer>
+
+    <!-- 3-Win Streak Reward Modal -->
+    <div id="reward-modal" class="hidden fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="modal-pop w-full max-w-md bg-stone-900 border-2 border-amber-400/60 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 relative">
+            <button type="button" onclick="closeRewardModal()" aria-label="Close Reward Modal"
+                class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold flex items-center justify-center">
+                ✕
+            </button>
+
+            <div class="text-center space-y-1.5">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-emerald-500 flex items-center justify-center text-3xl shadow-lg">
+                    🏆
+                </div>
+                <span class="block text-[11px] font-black uppercase tracking-widest text-emerald-400">
+                    3 Wins in a Row!
+                </span>
+                <h2 class="text-xl sm:text-2xl font-black gold-text">NLe REWARD UNLOCKED</h2>
+                <p id="reward-modal-headline" class="text-sm font-extrabold text-white">NLe 30 OFF + Free IDA/Kenema Delivery</p>
+                <p class="text-xs text-stone-400">Valid on orders over <strong class="text-stone-200">NLe 150</strong> at Alfred Enterprise (IDA, Kenema).</p>
+            </div>
+
+            <div class="bg-stone-950 border border-dashed border-amber-400/60 rounded-2xl p-3.5 flex items-center justify-between gap-2">
+                <div>
+                    <span class="block text-[10px] uppercase tracking-wider text-stone-400 font-bold">Promo Code</span>
+                    <span id="reward-modal-code" class="text-base sm:text-lg font-black mono text-amber-300">AE-KENEMA-XXXX</span>
+                </div>
+                <button id="copy-reward-btn" type="button" onclick="copyActivePromo()"
+                    class="btn-press bg-amber-500 hover:bg-amber-400 text-stone-950 font-extrabold text-xs px-3.5 py-2.5 rounded-xl shadow">
+                    Copy Code
+                </button>
+            </div>
+
+            <p id="copy-confirm-msg" class="hidden text-center text-xs font-bold text-emerald-400">
+                ✓ Code copied! Tap below to send it to Alfred on WhatsApp.
+            </p>
+
+            <div class="space-y-2 pt-1">
+                <a id="reward-whatsapp-link" href="https://wa.me/23276655025" target="_blank" rel="noopener noreferrer"
+                    class="btn-press w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-stone-950 font-black text-sm py-3.5 px-4 rounded-2xl shadow-lg flex items-center justify-center gap-2">
+                    <span>📲</span>
+                    <span>Claim on WhatsApp (+23276655025)</span>
+                </a>
+                <button type="button" onclick="closeRewardModal()"
+                    class="btn-press w-full bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold text-xs py-2.5 px-4 rounded-xl">
+                    Continue Playing
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saved Vouchers Drawer / Modal -->
+    <div id="vouchers-modal" class="hidden fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="modal-pop w-full max-w-md bg-stone-900 border border-stone-700 rounded-3xl p-5 shadow-2xl space-y-3.5 relative max-h-[82vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-stone-800 pb-3">
+                <div>
+                    <h2 class="text-base font-black text-amber-300">🎟️ Saved Promo Vouchers</h2>
+                    <p class="text-[11px] text-stone-400">Orders over NLe 150 • IDA, Kenema City</p>
+                </div>
+                <button type="button" onclick="closeVouchersModal()"
+                    class="w-8 h-8 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold flex items-center justify-center">
+                    ✕
+                </button>
+            </div>
+
+            <div id="vouchers-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1"></div>
+
+            <button type="button" onclick="closeVouchersModal()"
+                class="btn-press w-full bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold text-xs py-2.5 rounded-xl">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Alfred Enterprise — 3-Cup Shell Game & AI Vision Tracker
+         * Standalone 60fps HTML5 Canvas + Web Audio + LocalStorage Rewards
+         */
+
+        // =====================================================================
+        // 1. WEB AUDIO SYNTHESIZER (Throttled for Rapid Swaps)
+        // =====================================================================
+        let audioCtx = null;
+        let muted = false;
+        let lastSwapToneMs = 0;
+
+        function ensureAudio() {
+            if (!audioCtx) {
+                const AudioCtor = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtor) audioCtx = new AudioCtor();
+            }
+            if (audioCtx && audioCtx.state === "suspended") {
+                audioCtx.resume().catch(() => {});
+            }
+        }
+
+        function playTone(freq, dur, waveType, vol, endFreq) {
+            if (muted) return;
+            try {
+                ensureAudio();
+                if (!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = waveType || "sine";
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                if (endFreq) {
+                    osc.frequency.exponentialRampToValueAtTime(endFreq, audioCtx.currentTime + dur);
+                }
+                gain.gain.setValueAtTime(vol || 0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + dur);
+            } catch (e) {
+                // Ignore audio errors on restricted browsers
+            }
+        }
+
+        function triggerSFX(effect) {
+            if (muted) return;
+            const nowMs = performance.now();
+            if (effect === "lift") playTone(280, 0.13, "triangle", 0.11, 520);
+            else if (effect === "drop") playTone(420, 0.11, "triangle", 0.11, 200);
+            else if (effect === "swap") {
+                if (nowMs - lastSwapToneMs < 55) return;
+                lastSwapToneMs = nowMs;
+                playTone(190, 0.08, "sine", 0.06, 320);
+            } else if (effect === "turbo") {
+                if (nowMs - lastSwapToneMs < 48) return;
+                lastSwapToneMs = nowMs;
+                playTone(250, 0.06, "sawtooth", 0.065, 760);
+                setTimeout(() => playTone(520, 0.07, "triangle", 0.075, 1020), 35);
+            } else if (effect === "lock") {
+                playTone(880, 0.06, "square", 0.045);
+                setTimeout(() => playTone(1175, 0.08, "square", 0.045), 60);
+            } else if (effect === "win") {
+                playTone(523.25, 0.1, "triangle", 0.14);
+                setTimeout(() => playTone(659.25, 0.1, "triangle", 0.14), 95);
+                setTimeout(() => playTone(783.99, 0.2, "triangle", 0.16), 190);
+            } else if (effect === "reward") {
+                playTone(523.25, 0.09, "triangle", 0.15);
+                setTimeout(() => playTone(659.25, 0.09, "triangle", 0.15), 85);
+                setTimeout(() => playTone(783.99, 0.09, "triangle", 0.15), 170);
+                setTimeout(() => playTone(1046.5, 0.3, "triangle", 0.19), 255);
+            } else if (effect === "lose") {
+                playTone(270, 0.15, "sawtooth", 0.08, 180);
+                setTimeout(() => playTone(180, 0.22, "sawtooth", 0.08, 120), 140);
+            }
+        }
+
+        function toggleMute() {
+            muted = !muted;
+            document.getElementById("mute-btn").textContent = muted ? "🔇" : "🔊";
+            if (!muted) playTone(600, 0.07, "sine", 0.08);
+        }
+
+        // =====================================================================
+        // 2. VOUCHER STORAGE & WHATSAPP REWARD FLOW
+        // =====================================================================
+        const VOUCHER_KEY = "alfred_shell_vouchers_v3";
+        const WA_NUMBER = "23276655025";
+        let currentPromoCode = "";
+
+        function getSavedVouchers() {
+            try {
+                const raw = localStorage.getItem(VOUCHER_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveVoucher(v) {
+            try {
+                const all = getSavedVouchers();
+                all.unshift(v);
+                localStorage.setItem(VOUCHER_KEY, JSON.stringify(all.slice(0, 20)));
+            } catch (e) {
+                // Ignore storage errors
+            }
+            updateVoucherBadge();
+        }
+
+        function updateVoucherBadge() {
+            document.getElementById("voucher-count").textContent = String(getSavedVouchers().length);
+        }
+
+        function getTierPrize(speed) {
+            if (speed === "fast" || speed === "pro" || speed === "turbo" || speed === "ultraturno") {
+                const labels = { ultraturno: "Ultra Turbo", turbo: "Turbo", pro: "Pro", fast: "Fast" };
+                return {
+                    tierName: labels[speed] || "Fast",
+                    headline: "NLe 30 OFF + Free IDA/Kenema Delivery",
+                    shortLabel: "NLe 30 + Del",
+                    badgeLabel: "PRIZE: NLe 30 + FREE DELIVERY"
+                };
+            }
+            return {
+                tierName: speed === "medium" ? "Medium" : "Slow",
+                headline: "NLe 15 OFF Your Next Order",
+                shortLabel: "NLe 15 OFF",
+                badgeLabel: "PRIZE: NLe 15 OFF"
+            };
+        }
+
+        function generateCode() {
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            let out = "";
+            for (let i = 0; i < 4; i++) {
+                out += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return `AE-KENEMA-${out}`;
+        }
+
+        function buildWhatsAppLink(v) {
+            const msg =
+                `Hello Alfred Enterprise (IDA, Kenema)! 🏆\n` +
+                `I won a 3-Win Streak on your 3-Cup Shell Game (${v.tierName})!\n` +
+                `Promo Code: ${v.code}\n` +
+                `Reward: ${v.headline} (orders over NLe 150).`;
+            return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+        }
+
+        function openRewardModal() {
+            const prize = getTierPrize(app.speed);
+            const code = generateCode();
+            currentPromoCode = code;
+
+            const voucher = {
+                code,
+                tierName: prize.tierName,
+                headline: prize.headline,
+                date: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+            };
+            saveVoucher(voucher);
+
+            document.getElementById("reward-modal-headline").textContent = voucher.headline;
+            document.getElementById("reward-modal-code").textContent = voucher.code;
+            document.getElementById("reward-whatsapp-link").href = buildWhatsAppLink(voucher);
+            document.getElementById("copy-confirm-msg").classList.add("hidden");
+            document.getElementById("copy-reward-btn").textContent = "Copy Code";
+            document.getElementById("reward-modal").classList.remove("hidden");
+            triggerSFX("reward");
+        }
+
+        function closeRewardModal() {
+            document.getElementById("reward-modal").classList.add("hidden");
+        }
+
+        function copyTextSafe(text) {
+            const area = document.createElement("textarea");
+            area.value = text;
+            area.style.position = "fixed";
+            area.style.opacity = "0";
+            document.body.appendChild(area);
+            area.select();
+            try {
+                document.execCommand("copy");
+            } catch (e) {
+                // Ignore fallback failure
+            }
+            document.body.removeChild(area);
+        }
+
+        function copyActivePromo() {
+            if (!currentPromoCode) return;
+            copyTextSafe(currentPromoCode);
+            document.getElementById("copy-reward-btn").textContent = "Copied ✓";
+            document.getElementById("copy-confirm-msg").classList.remove("hidden");
+            playTone(760, 0.07, "sine", 0.08);
+        }
+
+        function openVouchersModal() {
+            const list = document.getElementById("vouchers-list");
+            const vouchers = getSavedVouchers();
+            if (!vouchers.length) {
+                list.innerHTML = `
+                    <div class="text-center py-8 px-3 space-y-1.5">
+                        <div class="text-3xl">🎟️</div>
+                        <p class="text-sm font-bold text-stone-200">No Vouchers Unlocked Yet</p>
+                        <p class="text-xs text-stone-400">Win 3 rounds in a row with <strong>AI Demo OFF</strong> to unlock an NLe discount code.</p>
+                    </div>
+                `;
+            } else {
+                list.innerHTML = vouchers.map(v => `
+                    <div class="bg-stone-950 border border-amber-500/30 rounded-2xl p-3 space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase text-emerald-400">${v.tierName} • ${v.date}</span>
+                                <p class="text-xs sm:text-sm font-extrabold text-white">${v.headline}</p>
+                                <p class="text-xs mono font-black text-amber-300 mt-0.5">${v.code}</p>
+                            </div>
+                            <button type="button" onclick="copyTextSafe('${v.code}'); this.textContent='Copied ✓';"
+                                class="btn-press bg-stone-800 hover:bg-stone-700 text-amber-300 text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-stone-700">
+                                Copy
+                            </button>
+                        </div>
+                        <a href="${buildWhatsAppLink(v)}" target="_blank" rel="noopener noreferrer"
+                            class="btn-press block w-full text-center bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-extrabold text-xs py-2 rounded-xl">
+                            Claim on WhatsApp (+23276655025) ↗
+                        </a>
+                    </div>
+                `).join("");
+            }
+            document.getElementById("vouchers-modal").classList.remove("hidden");
+        }
+
+        function closeVouchersModal() {
+            document.getElementById("vouchers-modal").classList.add("hidden");
+        }
+
+        // =====================================================================
+        // 3. STATE MACHINE, SPEED PRESETS & GUARANTEED CANVAS GEOMETRY
+        // =====================================================================
+        // Phases: IDLE | PEEKING | SHUFFLING | PICKING | REVEALING
+        const SPEEDS = {
+            slow:       { minMs: 540, maxMs: 620, pauseMs: 110, arc: 1.0,  ease: "cubic", peekUp: 270, peekHold: 500, peekDown: 230 },
+            medium:     { minMs: 360, maxMs: 430, pauseMs: 70,  arc: 1.0,  ease: "cubic", peekUp: 240, peekHold: 440, peekDown: 200 },
+            fast:       { minMs: 220, maxMs: 280, pauseMs: 35,  arc: 0.9,  ease: "cubic", peekUp: 200, peekHold: 350, peekDown: 170 },
+            pro:        { minMs: 150, maxMs: 190, pauseMs: 16,  arc: 0.78, ease: "snap",  peekUp: 175, peekHold: 290, peekDown: 140 },
+            turbo:      { minMs: 92,  maxMs: 140, pauseMs: 5,   arc: 0.62, ease: "turbo", peekUp: 150, peekHold: 230, peekDown: 115 },
+            ultraturno: { minMs: 62,  maxMs: 100, pauseMs: 2,   arc: 0.52, ease: "ultra", peekUp: 130, peekHold: 190, peekDown: 100 }
+        };
+
+        const app = {
+            phase: "IDLE",
+            speed: "ultraturno",
+            totalSwaps: 24,
+            swapsDone: 0,
+            ballCupId: 1,
+            pickedCupId: null,
+            aiDemo: false,
+            wins: 0,
+            rounds: 0,
+            streak: 0,
+            cups: [
+                { id: 0, slot: 0, x: 0, y: 0, lift: 0, scale: 1, hover: false },
+                { id: 1, slot: 1, x: 0, y: 0, lift: 0, scale: 1, hover: false },
+                { id: 2, slot: 2, x: 0, y: 0, lift: 0, scale: 1, hover: false }
+            ],
+            ball: { x: 0, y: 0, visible: true, glow: 0 },
+            activeSwap: null,
+            lastPair: null,
+            queuedFakes: [],
+            peekStep: "UP", // UP | HOLD | DOWN
+            phaseMs: 0,
+            trail: [],
+            confetti: [],
+            lastNow: performance.now()
+        };
+
+        const canvas = document.getElementById("shell-canvas");
+        const ctx = canvas.getContext("2d");
+        const stageContainer = document.getElementById("canvas-stage");
+
+        // Safe non-zero logical dimensions initialized before first paint
+        let stageW = 720;
+        let stageH = 340;
+
+        function computeStageMetrics() {
+            const w = Math.max(280, stageW);
+            const h = Math.max(270, stageH);
+            const isMobile = w < 520;
+            const cupW = isMobile
+                ? Math.max(62, Math.min(82, w * 0.21))
+                : Math.max(88, Math.min(116, w * 0.15));
+            const cupH = Math.max(72, cupW * 1.15);
+            const horizonY = Math.round(h * 0.43);
+            const baseY = Math.round(h * 0.74);
+            const spacing = isMobile ? w * 0.29 : Math.min(220, w * 0.27);
+            const centerX = w * 0.5;
+            const ballR = Math.max(10, cupW * 0.18);
+            return { w, h, cupW, cupH, horizonY, baseY, spacing, centerX, ballR };
+        }
+
+        function getSlotPoint(slotIdx) {
+            const { baseY, spacing, centerX } = computeStageMetrics();
+            return { x: centerX + (slotIdx - 1) * spacing, y: baseY };
+        }
+
+        function alignBallWithHostCup() {
+            const hostCup = app.cups.find(c => c.id === app.ballCupId) || app.cups[1];
+            if (hostCup) {
+                app.ball.x = hostCup.x;
+                app.ball.y = hostCup.y;
+            }
+        }
+
+        function syncCanvasSize() {
+            const rect = stageContainer.getBoundingClientRect();
+            const fallbackW = Math.max(300, (window.innerWidth || 360) - 24);
+            const fallbackH = Math.max(290, Math.min(410, Math.round((window.innerHeight || 640) * 0.46)));
+
+            stageW = rect.width >= 240 ? Math.round(rect.width) : fallbackW;
+            stageH = rect.height >= 240 ? Math.round(rect.height) : fallbackH;
+
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            canvas.width = Math.max(1, Math.round(stageW * dpr));
+            canvas.height = Math.max(1, Math.round(stageH * dpr));
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            if (!app.activeSwap) {
+                app.cups.forEach((cup, idx) => {
+                    if (typeof cup.slot !== "number") cup.slot = idx;
+                    const pt = getSlotPoint(cup.slot);
+                    cup.x = pt.x;
+                    cup.y = pt.y;
+                });
+            }
+            alignBallWithHostCup();
+        }
+
+        window.addEventListener("resize", syncCanvasSize);
+
+        // =====================================================================
+        // 4. HUD, STATUS & SETTINGS CONTROLS
+        // =====================================================================
+        function updateStatusBanner(text, tone) {
+            const el = document.getElementById("status-readout");
+            if (!el) return;
+            el.textContent = text;
+            let cls = "backdrop-blur px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-bold shadow border transition ";
+            if (tone === "emerald") cls += "bg-emerald-950/95 border-emerald-400/50 text-emerald-300";
+            else if (tone === "red") cls += "bg-red-950/95 border-red-400/50 text-red-300";
+            else cls += "bg-stone-950/95 border-amber-400/50 text-amber-300";
+            el.className = cls;
+        }
+
+        function updateBadges() {
+            document.getElementById("stat-wins").textContent = String(app.wins);
+            document.getElementById("stat-streak").textContent = String(app.streak);
+            const acc = app.rounds > 0 ? Math.round((app.wins / app.rounds) * 100) + "%" : "--%";
+            document.getElementById("stat-acc").textContent = acc;
+
+            for (let i = 1; i <= 3; i++) {
+                const pip = document.getElementById(`streak-pip-${i}`);
+                if (!pip) continue;
+                if (i <= app.streak) {
+                    pip.className = "w-3 h-3 rounded-full bg-gradient-to-tr from-amber-400 to-emerald-400 shadow";
+                } else {
+                    pip.className = "w-3 h-3 rounded-full bg-stone-800 border border-stone-600";
+                }
+            }
+
+            const prize = getTierPrize(app.speed);
+            document.getElementById("streak-reward-label").textContent = `${app.streak}/3 • ${prize.shortLabel}`;
+            document.getElementById("prize-status-badge").textContent = app.aiDemo
+                ? "AI DEMO: REWARDS PAUSED"
+                : prize.badgeLabel;
+            document.getElementById("swap-status-badge").textContent =
+                `PHASE: ${app.phase} • SWAPS: ${app.swapsDone} / ${app.totalSwaps}`;
+        }
+
+        function syncSettings() {
+            const speedEl = document.getElementById("speed-select");
+            const swapsEl = document.getElementById("swaps-select");
+            const prevSpeed = app.speed;
+            app.speed = speedEl.value;
+
+            if (app.speed === "ultraturno" && prevSpeed !== "ultraturno") {
+                const cur = parseInt(swapsEl.value, 10) || 24;
+                if (cur < 20) swapsEl.value = "24";
+            } else if (app.speed === "turbo" && prevSpeed !== "turbo") {
+                const cur = parseInt(swapsEl.value, 10) || 20;
+                if (cur < 18) swapsEl.value = "20";
+            }
+
+            app.totalSwaps = parseInt(swapsEl.value, 10) || 24;
+            updateBadges();
+        }
+
+        function toggleAIDemo() {
+            app.aiDemo = !app.aiDemo;
+            const btn = document.getElementById("ai-toggle-btn");
+            const dot = document.getElementById("ai-dot");
+            const badge = document.getElementById("ai-reward-badge");
+            const desc = document.getElementById("ai-desc");
+            const pill = document.getElementById("ai-telemetry-pill");
+            const scanlines = document.getElementById("ai-scanlines");
+
+            if (app.aiDemo) {
+                btn.textContent = "AI Demo: ON";
+                btn.setAttribute("aria-checked", "true");
+                btn.className = "btn-press shrink-0 px-3 py-2 rounded-xl font-extrabold text-xs bg-emerald-500 text-stone-950 shadow";
+                dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-ping";
+                badge.textContent = "Rewards Paused";
+                badge.className = "text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40";
+                desc.textContent = "Target lock box & motion trail ON. Turn OFF to build 3-win streak rewards.";
+                pill.classList.remove("hidden");
+                scanlines.classList.remove("hidden");
+                triggerSFX("lock");
+            } else {
+                btn.textContent = "AI Demo: OFF";
+                btn.setAttribute("aria-checked", "false");
+                btn.className = "btn-press shrink-0 px-3 py-2 rounded-xl font-extrabold text-xs bg-stone-800 border border-stone-600 text-stone-200";
+                dot.className = "w-2 h-2 rounded-full bg-stone-500";
+                badge.textContent = "Rewards ON";
+                badge.className = "text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/35";
+                desc.textContent = "OFF: Earn streak rewards. ON: Watch live target lock box & motion trail.";
+                pill.classList.add("hidden");
+                scanlines.classList.add("hidden");
+                playTone(340, 0.07, "sine", 0.08);
+            }
+            updateBadges();
+        }
+
+        function resetAndShowCups() {
+            syncCanvasSize();
+            syncSettings();
+            app.phase = "IDLE";
+            app.peekStep = "UP";
+            app.phaseMs = 0;
+            app.activeSwap = null;
+            app.lastPair = null;
+            app.queuedFakes = [];
+            app.swapsDone = 0;
+            app.pickedCupId = null;
+            app.trail = [];
+            app.confetti = [];
+            app.ball.visible = true;
+
+            app.cups.forEach((cup, idx) => {
+                cup.id = idx;
+                cup.slot = idx;
+                cup.lift = 0;
+                cup.scale = 1;
+                cup.hover = false;
+                const pt = getSlotPoint(idx);
+                cup.x = pt.x;
+                cup.y = pt.y;
+            });
+            alignBallWithHostCup();
+
+            document.getElementById("start-btn").disabled = false;
+            document.getElementById("start-btn-label").textContent = "Start Round";
+            updateStatusBanner("Cups #1, #2, #3 reset & visible! Tap Start Round.", "amber");
+            updateBadges();
+            playTone(460, 0.08, "triangle", 0.08, 620);
+        }
+
+        // =====================================================================
+        // 5. GAMEPLAY & MULTI-PATTERN SWAP ENGINE
+        // =====================================================================
+        function startRound() {
+            if (app.phase === "PEEKING" || app.phase === "SHUFFLING") return;
+            ensureAudio();
+            syncCanvasSize();
+            syncSettings();
+
+            if (app.streak >= 3) {
+                app.streak = 0;
+            }
+
+            app.ballCupId = Math.floor(Math.random() * 3);
+            app.pickedCupId = null;
+            app.swapsDone = 0;
+            app.activeSwap = null;
+            app.lastPair = null;
+            app.queuedFakes = [];
+            app.trail = [];
+            app.ball.visible = true;
+            app.peekStep = "UP";
+            app.phaseMs = 0;
+
+            app.cups.forEach(cup => {
+                cup.lift = 0;
+                cup.scale = 1;
+                const pt = getSlotPoint(cup.slot);
+                cup.x = pt.x;
+                cup.y = pt.y;
+            });
+            alignBallWithHostCup();
+
+            app.phase = "PEEKING";
+            document.getElementById("start-btn").disabled = true;
+            document.getElementById("start-btn-label").textContent = "Shuffling...";
+            updateStatusBanner("Watch closely! See which cup covers the golden ball...", "amber");
+            updateBadges();
+            triggerSFX("lift");
+            if (app.aiDemo) {
+                setTimeout(() => triggerSFX("lock"), 120);
+            }
+        }
+
+        function chooseSwapPair() {
+            if (app.queuedFakes.length > 0) {
+                return app.queuedFakes.shift();
+            }
+
+            let sA = Math.floor(Math.random() * 3);
+            let sB = Math.floor(Math.random() * 2);
+            if (sB >= sA) sB += 1;
+
+            if (
+                app.lastPair &&
+                ((app.lastPair[0] === sA && app.lastPair[1] === sB) ||
+                 (app.lastPair[0] === sB && app.lastPair[1] === sA))
+            ) {
+                sB = (sA + (Math.random() < 0.5 ? 1 : 2)) % 3;
+            }
+            app.lastPair = [sA, sB];
+
+            const leftSwaps = app.totalSwaps - app.swapsDone;
+            const fakeChance = app.speed === "ultraturno" ? 0.36 : app.speed === "turbo" ? 0.26 : app.speed === "pro" ? 0.18 : 0;
+            if (leftSwaps >= 2 && Math.random() < fakeChance) {
+                app.queuedFakes.push([sB, sA]);
+            }
+            return [sA, sB];
+        }
+
+        function chooseSwapPattern(isFake) {
+            if (isFake) return "straight";
+            const r = Math.random();
+            if (app.speed === "ultraturno" || app.speed === "turbo") {
+                if (r < 0.34) return "straight";
+                if (r < 0.72) return "ellipse";
+                return "figure8";
+            }
+            if (r < 0.22) return "straight";
+            if (r < 0.78) return "ellipse";
+            return "figure8";
+        }
+
+        function scheduleNextSwap() {
+            if (app.swapsDone >= app.totalSwaps) {
+                app.phase = "PICKING";
+                app.activeSwap = null;
+                app.queuedFakes = [];
+                document.getElementById("start-btn").disabled = false;
+                document.getElementById("start-btn-label").textContent = "Shuffle Again";
+                updateStatusBanner(
+                    app.aiDemo
+                        ? "AI locked onto the target cup! Tap it to reveal."
+                        : "Cups stopped! Tap the cup hiding the golden ball.",
+                    app.aiDemo ? "emerald" : "amber"
+                );
+                updateBadges();
+                return;
+            }
+
+            const isFake = app.queuedFakes.length > 0;
+            const [sA, sB] = chooseSwapPair();
+
+            const cupA = app.cups.find(c => c.slot === sA);
+            const cupB = app.cups.find(c => c.slot === sB);
+
+            const startA = getSlotPoint(sA);
+            const startB = getSlotPoint(sB);
+
+            cupA.slot = sB;
+            cupB.slot = sA;
+
+            const cfg = SPEEDS[app.speed] || SPEEDS.ultraturno;
+            const dur = cfg.minMs + Math.random() * (cfg.maxMs - cfg.minMs);
+            const sign = Math.random() < 0.5 ? 1 : -1;
+            const arcAmp = Math.min(58, stageH * 0.16) * cfg.arc;
+            const pattern = chooseSwapPattern(isFake);
+
+            app.activeSwap = {
+                cupA,
+                cupB,
+                startA,
+                startB,
+                endA: startB,
+                endB: startA,
+                sign,
+                arcAmp,
+                pattern,
+                elapsed: 0,
+                duration: dur,
+                pause: cfg.pauseMs,
+                ease: cfg.ease,
+                pausing: false
+            };
+
+            const fastSound = app.speed === "ultraturno" || app.speed === "turbo";
+            triggerSFX(fastSound ? "turbo" : "swap");
+        }
+
+        function spawnConfetti(x, y) {
+            const colors = ["#fbbf24", "#34d399", "#fde68a", "#10b981", "#ffffff"];
+            for (let i = 0; i < 40; i++) {
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 110 + Math.random() * 230;
+                app.confetti.push({
+                    x,
+                    y,
+                    vx: Math.cos(ang) * spd,
+                    vy: Math.sin(ang) * spd - 105,
+                    size: 4 + Math.random() * 4,
+                    color: colors[i % colors.length],
+                    angle: Math.random() * Math.PI * 2,
+                    spin: (Math.random() - 0.5) * 9,
+                    life: 1
+                });
+            }
+        }
+
+        function pickCup(cup) {
+            if (app.phase !== "PICKING") return;
+
+            app.pickedCupId = cup.id;
+            app.phase = "REVEALING";
+            app.phaseMs = 0;
+            app.ball.visible = true;
+            alignBallWithHostCup();
+
+            app.rounds += 1;
+            const won = cup.id === app.ballCupId;
+
+            document.getElementById("start-btn").disabled = false;
+            document.getElementById("start-btn-label").textContent = "Play Again";
+
+            if (won) {
+                app.wins += 1;
+                spawnConfetti(cup.x, cup.y - 35);
+                if (app.aiDemo) {
+                    updateStatusBanner("🎯 Target Found! Turn AI Demo OFF to count wins toward rewards.", "emerald");
+                    triggerSFX("win");
+                } else {
+                    app.streak += 1;
+                    if (app.streak >= 3) {
+                        updateStatusBanner("🏆 3-WIN STREAK! Your NLe discount code is unlocked!", "emerald");
+                        setTimeout(() => openRewardModal(), 400);
+                    } else {
+                        const rem = 3 - app.streak;
+                        updateStatusBanner(`🎯 Nice Eye! ${rem} more win${rem > 1 ? "s" : ""} in a row for your reward!`, "emerald");
+                        triggerSFX("win");
+                    }
+                }
+            } else {
+                if (!app.aiDemo) app.streak = 0;
+                updateStatusBanner("❌ Missed! Golden ball was under the highlighted cup.", "red");
+                triggerSFX("lose");
+            }
+            updateBadges();
+        }
+
+        // =====================================================================
+        // 6. POINTERDOWN + DEDUPLICATED CLICK HIT-TESTING
+        // =====================================================================
+        function getStageCoords(evt) {
+            const rect = canvas.getBoundingClientRect();
+            const touch = (evt.touches && evt.touches[0]) || (evt.changedTouches && evt.changedTouches[0]) || evt;
+            const rw = Math.max(1, rect.width || stageW);
+            const rh = Math.max(1, rect.height || stageH);
+            return {
+                x: (touch.clientX - rect.left) * (stageW / rw),
+                y: (touch.clientY - rect.top) * (stageH / rh)
+            };
+        }
+
+        function findHitCup(px, py) {
+            const { cupW, cupH } = computeStageMetrics();
+            const sortedFrontToBack = [...app.cups].sort((a, b) => b.y - a.y);
+            for (const c of sortedFrontToBack) {
+                const top = c.y - c.lift - cupH * c.scale - 14;
+                const bottom = c.y - c.lift + 20;
+                const halfW = cupW * 0.64 * c.scale;
+                if (px >= c.x - halfW && px <= c.x + halfW && py >= top && py <= bottom) {
+                    return c;
+                }
+            }
+            return null;
+        }
+
+        let lastTapMs = 0;
+
+        function onStageTap(evt) {
+            const pt = getStageCoords(evt);
+            const hit = findHitCup(pt.x, pt.y);
+
+            if (app.phase === "PICKING") {
+                if (hit) {
+                    pickCup(hit);
+                } else {
+                    updateStatusBanner("Tap directly on Cup #1, #2, or #3 to pick!", "amber");
+                }
+            } else if (app.phase === "IDLE" || app.phase === "REVEALING") {
+                startRound();
+            } else if (app.phase === "SHUFFLING" || app.phase === "PEEKING") {
+                updateStatusBanner("Cups are moving — wait until shuffling finishes!", "amber");
+            }
+        }
+
+        canvas.addEventListener("pointermove", (e) => {
+            const pt = getStageCoords(e);
+            const hit = app.phase === "PICKING" ? findHitCup(pt.x, pt.y) : null;
+            app.cups.forEach(c => { c.hover = Boolean(hit && hit.id === c.id); });
+            canvas.style.cursor = hit || app.phase === "IDLE" || app.phase === "REVEALING" ? "pointer" : "default";
+        });
+
+        canvas.addEventListener("pointerleave", () => {
+            app.cups.forEach(c => { c.hover = false; });
+        });
+
+        canvas.addEventListener("pointerdown", (e) => {
+            lastTapMs = performance.now();
+            onStageTap(e);
+        });
+
+        canvas.addEventListener("click", (e) => {
+            if (performance.now() - lastTapMs < 90) return;
+            onStageTap(e);
+        });
+
+        // =====================================================================
+        // 7. EASING & 60FPS FRAME UPDATE
+        // =====================================================================
+        function easeCubicInOut(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function easeCurve(t, mode) {
+            const c = Math.max(0, Math.min(1, t));
+            if (mode === "ultra") return 1 - Math.pow(1 - c, 2.65);
+            if (mode === "turbo") return 1 - Math.pow(1 - c, 2.3);
+            if (mode === "snap") return c < 0.5 ? 8 * c * c * c * c : 1 - Math.pow(-2 * c + 2, 3) / 2;
+            return easeCubicInOut(c);
+        }
+
+        function pulseTurboFlash() {
+            const flash = document.getElementById("turbo-flash-layer");
+            flash.classList.remove("hidden", "turbo-flash");
+            void flash.offsetWidth;
+            flash.classList.add("turbo-flash");
+            setTimeout(() => {
+                flash.classList.add("hidden");
+                flash.classList.remove("turbo-flash");
+            }, 420);
+        }
+
+        function updateGame(dt) {
+            const { cupH } = computeStageMetrics();
+            const maxLift = cupH * 0.65;
+            const cfg = SPEEDS[app.speed] || SPEEDS.ultraturno;
+            app.ball.glow += dt * 0.005;
+
+            if (app.phase === "PEEKING") {
+                app.phaseMs += dt;
+                const host = app.cups.find(c => c.id === app.ballCupId);
+                if (app.peekStep === "UP") {
+                    const p = Math.min(1, app.phaseMs / cfg.peekUp);
+                    if (host) host.lift = easeCubicInOut(p) * maxLift;
+                    if (p >= 1) {
+                        app.peekStep = "HOLD";
+                        app.phaseMs = 0;
+                    }
+                } else if (app.peekStep === "HOLD") {
+                    if (app.phaseMs >= cfg.peekHold) {
+                        app.peekStep = "DOWN";
+                        app.phaseMs = 0;
+                        triggerSFX("drop");
+                    }
+                } else if (app.peekStep === "DOWN") {
+                    const p = Math.min(1, app.phaseMs / cfg.peekDown);
+                    if (host) host.lift = (1 - easeCubicInOut(p)) * maxLift;
+                    if (p >= 1) {
+                        if (host) host.lift = 0;
+                        app.ball.visible = false;
+                        app.phase = "SHUFFLING";
+                        const blitz = app.speed === "ultraturno" || app.speed === "turbo";
+                        if (blitz) {
+                            pulseTurboFlash();
+                            triggerSFX("turbo");
+                        }
+                        updateStatusBanner(
+                            app.speed === "ultraturno"
+                                ? "🔥 ULTRA TURBO! High-speed swaps underway!"
+                                : (app.speed === "turbo"
+                                    ? "⚡ TURBO SHUFFLE! Track the cup fast!"
+                                    : (app.aiDemo ? "AI Vision tracking target..." : "Shuffling cups... follow closely!")),
+                            app.aiDemo || blitz ? "emerald" : "amber"
+                        );
+                        updateBadges();
+                        scheduleNextSwap();
+                    }
+                }
+            } else if (app.phase === "SHUFFLING" && app.activeSwap) {
+                const sw = app.activeSwap;
+                sw.elapsed += dt;
+
+                if (!sw.pausing) {
+                    const rawT = Math.min(1, sw.elapsed / sw.duration);
+                    const e = easeCurve(rawT, sw.ease);
+                    const arcSin = Math.sin(Math.PI * e);
+
+                    let dyA = 0;
+                    let dyB = 0;
+                    if (sw.pattern === "ellipse") {
+                        dyA = sw.sign * sw.arcAmp * arcSin;
+                        dyB = -sw.sign * sw.arcAmp * arcSin;
+                    } else if (sw.pattern === "figure8") {
+                        const lobe = Math.sin(Math.PI * 2 * e) * 0.6 + arcSin * 0.55;
+                        dyA = sw.sign * sw.arcAmp * lobe;
+                        dyB = -sw.sign * sw.arcAmp * lobe;
+                    } else {
+                        dyA = sw.sign * (sw.arcAmp * 0.14) * arcSin;
+                        dyB = -sw.sign * (sw.arcAmp * 0.14) * arcSin;
+                    }
+
+                    const scaleDelta = sw.pattern === "straight" ? 0.03 : 0.065;
+                    sw.cupA.x = sw.startA.x + (sw.endA.x - sw.startA.x) * e;
+                    sw.cupA.y = sw.startA.y + dyA;
+                    sw.cupA.scale = 1 + sw.sign * scaleDelta * arcSin;
+
+                    sw.cupB.x = sw.startB.x + (sw.endB.x - sw.startB.x) * e;
+                    sw.cupB.y = sw.startB.y + dyB;
+                    sw.cupB.scale = 1 - sw.sign * scaleDelta * arcSin;
+
+                    if (rawT >= 1) {
+                        sw.cupA.x = sw.endA.x;
+                        sw.cupA.y = sw.endA.y;
+                        sw.cupA.scale = 1;
+                        sw.cupB.x = sw.endB.x;
+                        sw.cupB.y = sw.endB.y;
+                        sw.cupB.scale = 1;
+                        sw.pausing = true;
+                        sw.elapsed = 0;
+                        app.swapsDone += 1;
+                        updateBadges();
+                    }
+                } else if (sw.elapsed >= sw.pause) {
+                    scheduleNextSwap();
+                }
+            } else if (app.phase === "REVEALING") {
+                app.phaseMs += dt;
+                const p = Math.min(1, app.phaseMs / 300);
+                const liftVal = easeCubicInOut(p) * maxLift;
+                app.cups.forEach(c => {
+                    if (c.id === app.ballCupId || c.id === app.pickedCupId) {
+                        c.lift = liftVal;
+                    }
+                });
+            }
+
+            // Update AI motion trail & readout
+            const target = app.cups.find(c => c.id === app.ballCupId);
+            if (target && app.aiDemo) {
+                const tx = Math.round(target.x);
+                const ty = Math.round(target.y - target.lift - cupH * 0.45);
+                if (app.phase === "SHUFFLING") {
+                    app.trail.push({ x: tx, y: ty, alpha: 1 });
+                    if (app.trail.length > 24) app.trail.shift();
+                } else {
+                    app.trail.forEach(pt => { pt.alpha -= dt * 0.003; });
+                    app.trail = app.trail.filter(pt => pt.alpha > 0);
+                }
+                document.getElementById("ai-lock-readout").textContent =
+                    app.phase === "IDLE" ? "LOCK: STANDBY" : "TARGET #01 LOCKED";
+                document.getElementById("ai-coord-readout").textContent = `X:${tx} Y:${ty}`;
+            }
+
+            // Update confetti particles
+            const sec = dt / 1000;
+            app.confetti.forEach(p => {
+                p.x += p.vx * sec;
+                p.y += p.vy * sec;
+                p.vy += 490 * sec;
+                p.angle += p.spin * sec;
+                p.life -= sec * 0.85;
+            });
+            app.confetti = app.confetti.filter(p => p.life > 0);
+
+            alignBallWithHostCup();
+        }
+
+        // =====================================================================
+        // 8. CANVAS RENDERER (STUDIO, WOOD/FELT TABLE, 3D CUPS, BALL & HUD)
+        // =====================================================================
+        function renderBackgroundAndTable() {
+            const { w, h, horizonY } = computeStageMetrics();
+
+            // Warm dark studio backdrop
+            const studioGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
+            studioGrad.addColorStop(0, "#23170f");
+            studioGrad.addColorStop(1, "#0d0806");
+            ctx.fillStyle = studioGrad;
+            ctx.fillRect(0, 0, w, horizonY);
+
+            // Overhead warm spotlight
+            const spot = ctx.createRadialGradient(w * 0.5, 16, 12, w * 0.5, horizonY * 0.75, w * 0.58);
+            spot.addColorStop(0, "rgba(251, 191, 36, 0.16)");
+            spot.addColorStop(1, "rgba(251, 191, 36, 0)");
+            ctx.fillStyle = spot;
+            ctx.fillRect(0, 0, w, horizonY);
+
+            // Walnut wood border + rich emerald felt tabletop
+            const tableGrad = ctx.createLinearGradient(0, horizonY, 0, h);
+            tableGrad.addColorStop(0, "#451a03");
+            tableGrad.addColorStop(0.18, "#78350f");
+            tableGrad.addColorStop(0.24, "#064e3b");
+            tableGrad.addColorStop(1, "#022c22");
+            ctx.fillStyle = tableGrad;
+            ctx.fillRect(0, horizonY, w, h - horizonY);
+
+            // Gold trim along table edge
+            ctx.strokeStyle = "#f59e0b";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, horizonY);
+            ctx.lineTo(w, horizonY);
+            ctx.stroke();
+
+            // Subtle slot rings on felt
+            for (let s = 0; s < 3; s++) {
+                const pt = getSlotPoint(s);
+                ctx.save();
+                ctx.strokeStyle = "rgba(253, 230, 138, 0.22)";
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.ellipse(pt.x, pt.y + 4, 38, 9, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function renderBall() {
+            if (!app.ball.visible) return;
+            const { ballR } = computeStageMetrics();
+            const bx = app.ball.x;
+            const by = app.ball.y - ballR * 0.72;
+            const glowScale = 1 + Math.sin(app.ball.glow) * 0.08;
+
+            ctx.save();
+
+            // Ground shadow
+            ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+            ctx.beginPath();
+            ctx.ellipse(bx, app.ball.y + 3, ballR * 0.95, ballR * 0.28, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Warm golden aura
+            const aura = ctx.createRadialGradient(bx, by, ballR * 0.15, bx, by, ballR * 2.2 * glowScale);
+            aura.addColorStop(0, "rgba(251, 191, 36, 0.65)");
+            aura.addColorStop(1, "rgba(251, 191, 36, 0)");
+            ctx.fillStyle = aura;
+            ctx.beginPath();
+            ctx.arc(bx, by, ballR * 2.2 * glowScale, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 3D golden sphere with specular highlight
+            const sphere = ctx.createRadialGradient(
+                bx - ballR * 0.35,
+                by - ballR * 0.35,
+                ballR * 0.1,
+                bx,
+                by,
+                ballR
+            );
+            sphere.addColorStop(0, "#fef9c3");
+            sphere.addColorStop(0.35, "#fbbf24");
+            sphere.addColorStop(0.85, "#b45309");
+            sphere.addColorStop(1, "#78350f");
+            ctx.fillStyle = sphere;
+            ctx.beginPath();
+            ctx.arc(bx, by, ballR, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function renderCup(cup) {
+            const { cupW, cupH } = computeStageMetrics();
+            const wBot = cupW * cup.scale;
+            const wTop = cupW * 0.64 * cup.scale;
+            const h = cupH * cup.scale;
+            const cx = cup.x;
+            const baseY = cup.y - cup.lift;
+            const topY = baseY - h;
+
+            ctx.save();
+
+            // Drop shadow on felt surface
+            const liftNorm = Math.min(1, cup.lift / (cupH * 0.7));
+            const shScale = 1 - liftNorm * 0.24;
+            ctx.fillStyle = `rgba(0, 0, 0, ${0.58 - liftNorm * 0.22})`;
+            ctx.beginPath();
+            ctx.ellipse(cx, cup.y + 5, (wBot * 0.56) * shScale, 10 * shScale, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Tapered cup silhouette
+            ctx.beginPath();
+            ctx.moveTo(cx - wTop * 0.5, topY);
+            ctx.lineTo(cx + wTop * 0.5, topY);
+            ctx.lineTo(cx + wBot * 0.5, baseY);
+            ctx.quadraticCurveTo(cx, baseY + 11 * cup.scale, cx - wBot * 0.5, baseY);
+            ctx.closePath();
+
+            // 3D shaded gradient + specular highlight band
+            const bodyGrad = ctx.createLinearGradient(cx - wBot * 0.5, topY, cx + wBot * 0.5, topY);
+            if (cup.hover && app.phase === "PICKING") {
+                bodyGrad.addColorStop(0, "#78350f");
+                bodyGrad.addColorStop(0.32, "#fbbf24");
+                bodyGrad.addColorStop(0.68, "#d97706");
+                bodyGrad.addColorStop(1, "#451a03");
+            } else {
+                bodyGrad.addColorStop(0, "#450a0a");
+                bodyGrad.addColorStop(0.28, "#dc2626");
+                bodyGrad.addColorStop(0.54, "#f87171");
+                bodyGrad.addColorStop(0.84, "#7f1d1d");
+                bodyGrad.addColorStop(1, "#2a0404");
+            }
+            ctx.fillStyle = bodyGrad;
+            ctx.fill();
+
+            // Vertical specular highlight streak
+            ctx.fillStyle = "rgba(255, 255, 255, 0.16)";
+            ctx.beginPath();
+            ctx.roundRect(cx - wTop * 0.24, topY + 6, Math.max(4, wTop * 0.14), Math.max(12, h - 14), 6);
+            ctx.fill();
+
+            // Gold top rim & base rim
+            ctx.strokeStyle = "#fbbf24";
+            ctx.lineWidth = 2.4 * cup.scale;
+            ctx.beginPath();
+            ctx.moveTo(cx - wTop * 0.5, topY + 1);
+            ctx.lineTo(cx + wTop * 0.5, topY + 1);
+            ctx.stroke();
+
+            ctx.lineWidth = 2.8 * cup.scale;
+            ctx.beginPath();
+            ctx.moveTo(cx - wBot * 0.5, baseY);
+            ctx.quadraticCurveTo(cx, baseY + 11 * cup.scale, cx + wBot * 0.5, baseY);
+            ctx.stroke();
+
+            // Top cap dome
+            ctx.fillStyle = "#991b1b";
+            ctx.beginPath();
+            ctx.ellipse(cx, topY, wTop * 0.5, 6.5 * cup.scale, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#fde68a";
+            ctx.lineWidth = 1.3;
+            ctx.stroke();
+
+            // Cup number (#1, #2, #3)
+            ctx.fillStyle = "#fef9c3";
+            ctx.font = `800 ${Math.max(11, Math.round(13 * cup.scale))}px 'JetBrains Mono', monospace`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(`#${cup.id + 1}`, cx, topY + h * 0.56);
+
+            ctx.restore();
+        }
+
+        function renderAIOverlay() {
+            if (!app.aiDemo) return;
+            const target = app.cups.find(c => c.id === app.ballCupId);
+            if (!target) return;
+
+            const { cupW, cupH } = computeStageMetrics();
+            const padX = 12;
+            const padY = 10;
+            const boxW = cupW * target.scale + padX * 2;
+            const boxH = cupH * target.scale + padY * 2;
+            const left = target.x - boxW * 0.5;
+            const top = (target.y - target.lift) - cupH * target.scale - padY;
+            const cx = target.x;
+            const cy = top + boxH * 0.5;
+
+            ctx.save();
+
+            // Motion trail
+            if (app.trail.length > 1) {
+                for (let i = 1; i < app.trail.length; i++) {
+                    const prev = app.trail[i - 1];
+                    const curr = app.trail[i];
+                    const ratio = i / app.trail.length;
+                    ctx.strokeStyle = `rgba(16, 185, 129, ${ratio * 0.7})`;
+                    ctx.lineWidth = 2 + ratio * 2.5;
+                    ctx.beginPath();
+                    ctx.moveTo(prev.x, prev.y);
+                    ctx.lineTo(curr.x, curr.y);
+                    ctx.stroke();
+                }
+            }
+
+            // Bounding box
+            ctx.fillStyle = "rgba(16, 185, 129, 0.08)";
+            ctx.fillRect(left, top, boxW, boxH);
+            ctx.strokeStyle = "rgba(16, 185, 129, 0.4)";
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.strokeRect(left, top, boxW, boxH);
+            ctx.setLineDash([]);
+
+            // Corner brackets
+            const len = 13;
+            ctx.strokeStyle = "#10b981";
+            ctx.lineWidth = 2.8;
+            ctx.beginPath();
+            ctx.moveTo(left, top + len); ctx.lineTo(left, top); ctx.lineTo(left + len, top);
+            ctx.moveTo(left + boxW - len, top); ctx.lineTo(left + boxW, top); ctx.lineTo(left + boxW, top + len);
+            ctx.moveTo(left, top + boxH - len); ctx.lineTo(left, top + boxH); ctx.lineTo(left + len, top + boxH);
+            ctx.moveTo(left + boxW - len, top + boxH); ctx.lineTo(left + boxW, top + boxH); ctx.lineTo(left + boxW, top + boxH - len);
+            ctx.stroke();
+
+            // Centroid crosshair
+            ctx.fillStyle = "#34d399";
+            ctx.beginPath();
+            ctx.arc(cx, cy, 3.8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "rgba(52, 211, 153, 0.85)";
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(cx - 9, cy); ctx.lineTo(cx + 9, cy);
+            ctx.moveTo(cx, cy - 9); ctx.lineTo(cx, cy + 9);
+            ctx.stroke();
+
+            // Target lock badge
+            const tag = "ID:01 BALL";
+            ctx.font = "700 10px 'JetBrains Mono', monospace";
+            const tw = ctx.measureText(tag).width + 10;
+            const th = 17;
+            const tx = left;
+            const ty = Math.max(44, top - th - 4);
+            ctx.fillStyle = "#10b981";
+            ctx.beginPath();
+            ctx.roundRect(tx, ty, tw, th, 4);
+            ctx.fill();
+            ctx.fillStyle = "#022c22";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText(tag, tx + 5, ty + th * 0.5 + 0.5);
+
+            ctx.restore();
+        }
+
+        function renderConfetti() {
+            if (!app.confetti.length) return;
+            for (const p of app.confetti) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.angle);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size * 0.5, -p.size * 0.35, p.size, p.size * 0.7);
+                ctx.restore();
+            }
+        }
+
+        function renderAll() {
+            syncCanvasSize();
+            ctx.clearRect(0, 0, stageW, stageH);
+            renderBackgroundAndTable();
+            renderBall();
+
+            const sortedCups = [...app.cups].sort((a, b) => a.y - b.y);
+            for (const c of sortedCups) {
+                renderCup(c);
+            }
+
+            renderAIOverlay();
+            renderConfetti();
+        }
+
+        function tick(now) {
+            const dt = Math.min(50, Math.max(0, now - app.lastNow));
+            app.lastNow = now;
+            updateGame(dt);
+            renderAll();
+            requestAnimationFrame(tick);
+        }
+
+        function bootApp() {
+            syncCanvasSize();
+            syncSettings();
+            updateBadges();
+            updateVoucherBadge();
+            renderAll();
+            app.lastNow = performance.now();
+            requestAnimationFrame(tick);
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", bootApp);
+        } else {
+            bootApp();
+        }
+        window.addEventListener("load", bootApp);
+    </script>
+</body>
+</html>
+```
