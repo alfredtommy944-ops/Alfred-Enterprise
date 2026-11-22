@@ -1,0 +1,1278 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alfred Enterprise — IDA Street Skating Arcade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+    <style>
+        /* Royal-blue and gold/amber arcade theme tailored for mobile and desktop */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 50% 0%, #2563eb 0%, #1d4ed8 44%, #0f172a 100%);
+            color: #ffffff;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .arcade-title {
+            text-shadow: 0 3px 0 rgba(15, 23, 42, 0.65), 0 0 18px rgba(251, 191, 36, 0.35);
+        }
+        .glossy-panel {
+            background: linear-gradient(180deg, rgba(30, 58, 138, 0.92) 0%, rgba(15, 23, 42, 0.96) 100%);
+            border: 2px solid rgba(147, 197, 253, 0.38);
+            box-shadow: 0 12px 28px rgba(2, 6, 23, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+        }
+        .mode-tile {
+            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+            border: 2px solid #bae6fd;
+            box-shadow: 0 5px 0 #0369a1, 0 10px 18px rgba(2, 6, 23, 0.4);
+        }
+        .mode-tile-gold {
+            background: linear-gradient(180deg, #fde047 0%, #eab308 100%);
+            border: 2px solid #fef9c3;
+            box-shadow: 0 5px 0 #a16207, 0 10px 18px rgba(2, 6, 23, 0.4);
+            color: #0f172a;
+        }
+        .btn-press {
+            transition: transform 0.1s ease, filter 0.15s ease;
+        }
+        .btn-press:active {
+            transform: translateY(3px);
+        }
+        .btn-press:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #track-wrap {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            aspect-ratio: 3 / 4;
+            margin: 0 auto;
+        }
+        #skate-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 18px;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-2.5 sm:p-4">
+
+    <!-- Top Arcade Header -->
+    <header class="relative z-20 w-full max-w-4xl mx-auto glossy-panel rounded-3xl px-3.5 py-2.5 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+            <a href="./index.html"
+                class="btn-press bg-slate-950/85 hover:bg-slate-900 border border-sky-300/40 text-sky-100 text-xs font-extrabold px-2.5 py-2 rounded-xl shrink-0">
+                ← Store
+            </a>
+            <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <h1 class="text-sm sm:text-base font-black tracking-wide text-amber-300 arcade-title truncate">
+                        IDA STREET SKATE • ALFRED ENTERPRISE
+                    </h1>
+                    <span class="hidden sm:inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-sky-400/20 text-sky-200 border border-sky-300/40">
+                        IDA, Kenema City
+                    </span>
+                </div>
+                <p class="text-[11px] text-sky-100/80 truncate">Live Traffic, Okadas &amp; Cars • High-Score Arcade</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button id="howto-btn" type="button" onclick="openModal('howto-modal')"
+                class="btn-press bg-sky-500/25 hover:bg-sky-500/35 border border-sky-300/45 text-sky-100 text-xs font-extrabold px-2.5 py-2 rounded-xl cursor-pointer">
+                ? Rules
+            </button>
+            <button id="pause-btn" type="button" onclick="togglePause()" aria-label="Pause or Resume Game"
+                class="btn-press bg-slate-900/80 hover:bg-slate-800 border border-sky-300/35 text-white px-2.5 py-2 rounded-xl text-xs font-bold cursor-pointer">
+                ⏸
+            </button>
+            <button id="mute-btn" type="button" onclick="toggleMute()" aria-label="Toggle Sound"
+                class="btn-press bg-slate-900/80 hover:bg-slate-800 border border-sky-300/35 text-white px-2.5 py-2 rounded-xl text-xs font-bold cursor-pointer">
+                🔊
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="relative z-10 w-full max-w-4xl mx-auto my-2.5 flex-1 flex flex-col gap-2.5">
+
+        <!-- Score, Best, Coins & Dodges HUD -->
+        <section class="glossy-panel rounded-3xl p-3 grid grid-cols-4 gap-2 text-center">
+            <div class="bg-slate-950/75 border border-sky-300/25 rounded-2xl py-2 px-1.5">
+                <span class="block text-[10px] uppercase tracking-wider text-sky-200/75 font-bold">Score</span>
+                <span id="score-display" class="mono text-sm sm:text-xl font-black text-amber-300">0</span>
+            </div>
+            <div class="bg-slate-950/75 border border-sky-300/25 rounded-2xl py-2 px-1.5">
+                <span class="block text-[10px] uppercase tracking-wider text-sky-200/75 font-bold">Best</span>
+                <span id="best-display" class="mono text-sm sm:text-xl font-black text-emerald-300">0</span>
+            </div>
+            <div class="bg-slate-950/75 border border-sky-300/25 rounded-2xl py-2 px-1.5">
+                <span class="block text-[10px] uppercase tracking-wider text-sky-200/75 font-bold">Coins</span>
+                <span id="coins-display" class="mono text-sm sm:text-xl font-black text-yellow-300">0</span>
+            </div>
+            <div class="bg-slate-950/75 border border-sky-300/25 rounded-2xl py-2 px-1.5">
+                <span class="block text-[10px] uppercase tracking-wider text-sky-200/75 font-bold">Dodges</span>
+                <span id="dodge-display" class="mono text-sm sm:text-xl font-black text-sky-200">0</span>
+            </div>
+        </section>
+
+        <!-- Street Canvas + Start / Pause Overlays -->
+        <section class="glossy-panel rounded-3xl p-2.5 sm:p-4">
+            <div id="track-wrap">
+                <canvas id="skate-canvas"></canvas>
+
+                <!-- Start Overlay -->
+                <div id="start-overlay" class="absolute inset-0 z-20 rounded-[18px] bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center p-5 text-center space-y-4">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-b from-amber-300 to-amber-500 border-2 border-amber-100 flex items-center justify-center text-3xl shadow-xl">
+                        🛹
+                    </div>
+                    <div class="space-y-1 max-w-xs">
+                        <h2 class="text-xl font-black text-amber-300 arcade-title">IDA Street Skate</h2>
+                        <p class="text-xs text-sky-100/90 leading-relaxed">
+                            Skate down <strong class="text-white">IDA Street, Kenema City</strong>! Weave past <strong class="text-red-300">motor cars &amp; okada bikes</strong>, ollie over <strong class="text-amber-300">cones &amp; barriers</strong>, hit <strong class="text-sky-300">ramps</strong>, collect <strong class="text-yellow-300">coins</strong>, and chase your high score!
+                        </p>
+                    </div>
+                    <button id="start-btn" type="button" onclick="startGame()"
+                        class="btn-press mode-tile-gold font-black text-sm px-7 py-3.5 rounded-2xl shadow-xl cursor-pointer">
+                        ▶ Start Skating
+                    </button>
+                </div>
+
+                <!-- Pause Overlay -->
+                <div id="pause-overlay" class="hidden absolute inset-0 z-20 rounded-[18px] bg-slate-950/75 backdrop-blur-xs flex flex-col items-center justify-center p-5 text-center space-y-4">
+                    <h2 class="text-xl font-black text-amber-300 arcade-title">PAUSED</h2>
+                    <p class="text-xs text-sky-100/85">IDA Street traffic is holding steady.</p>
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="togglePause()"
+                            class="btn-press mode-tile-gold font-black text-xs sm:text-sm px-5 py-3 rounded-2xl cursor-pointer">
+                            ▶ Resume
+                        </button>
+                        <button type="button" onclick="startGame()"
+                            class="btn-press mode-tile font-black text-xs sm:text-sm text-white px-5 py-3 rounded-2xl cursor-pointer">
+                            🔄 Restart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tactile Mobile / Desktop Action Controls -->
+        <section class="glossy-panel rounded-3xl p-2.5 sm:p-3 grid grid-cols-4 gap-2">
+            <button id="left-btn" type="button" onclick="handleLeftAction()"
+                class="btn-press mode-tile font-black text-xs sm:text-sm text-white py-3.5 rounded-2xl flex items-center justify-center gap-1 cursor-pointer">
+                <span>◀</span>
+                <span>Left</span>
+            </button>
+
+            <button id="jump-btn" type="button" onclick="handleJumpAction()"
+                class="btn-press mode-tile-gold font-black text-xs sm:text-sm py-3.5 rounded-2xl flex items-center justify-center gap-1 cursor-pointer">
+                <span>⬆</span>
+                <span>Ollie</span>
+            </button>
+
+            <button id="crouch-btn" type="button"
+                onpointerdown="setCrouch(true)"
+                onpointerup="setCrouch(false)"
+                onpointerleave="setCrouch(false)"
+                onpointercancel="setCrouch(false)"
+                class="btn-press bg-slate-900/90 hover:bg-slate-800 border-2 border-sky-300/45 font-black text-xs sm:text-sm text-sky-200 py-3.5 rounded-2xl flex items-center justify-center gap-1 cursor-pointer">
+                <span>⬇</span>
+                <span>Tuck</span>
+            </button>
+
+            <button id="right-btn" type="button" onclick="handleRightAction()"
+                class="btn-press mode-tile font-black text-xs sm:text-sm text-white py-3.5 rounded-2xl flex items-center justify-center gap-1 cursor-pointer">
+                <span>Right</span>
+                <span>▶</span>
+            </button>
+        </section>
+
+        <!-- Store Footer & WhatsApp Support -->
+        <section class="glossy-panel rounded-2xl px-3.5 py-2 text-[11px] text-sky-100/85 flex flex-wrap items-center justify-between gap-2">
+            <span>📍 <strong class="text-amber-300">Alfred Enterprise</strong> • IDA, Kenema City • Swipe/Tap or A/D + W/Space + S</span>
+            <a href="https://wa.me/23276655025?text=Hello%20Alfred%20Enterprise%20(IDA%2C%20Kenema%20City)!%20I%20am%20playing%20IDA%20Street%20Skate."
+                target="_blank" rel="noopener noreferrer" class="text-amber-300 font-extrabold underline">
+                💬 +23276655025
+            </a>
+        </section>
+    </main>
+
+    <!-- How to Play Modal -->
+    <div id="howto-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md glossy-panel rounded-3xl p-5 sm:p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-sky-300/25 pb-2.5">
+                <h2 class="text-base font-black text-amber-300">📖 How to Skate IDA Street</h2>
+                <button type="button" onclick="closeModal('howto-modal')"
+                    class="w-8 h-8 rounded-full bg-slate-900/80 hover:bg-slate-800 text-sky-100 font-bold cursor-pointer">
+                    ✕
+                </button>
+            </div>
+            <ul class="space-y-2.5 text-xs text-sky-50/90 leading-relaxed">
+                <li><strong class="text-amber-300">1. Lane Carving:</strong> Swipe left/right, tap <strong class="text-white">Left / Right</strong>, or press <strong class="text-white">A / D</strong> or <strong class="text-white">← / →</strong> to move across lanes on IDA Street.</li>
+                <li><strong class="text-amber-300">2. Ollie &amp; Tuck:</strong> Tap the street or <strong class="text-white">Ollie</strong> (or press <strong class="text-white">Space / W / ↑</strong>) to jump over cones, okadas, and barriers; hold <strong class="text-white">Tuck</strong> (<strong class="text-white">S / ↓</strong>) for tight lines.</li>
+                <li><strong class="text-amber-300">3. Traffic Dodges, Ramps &amp; Shields:</strong> Close-passing cars and okada bikes earns <strong class="text-amber-300">+25 Dodge</strong> points; <strong class="text-sky-300">Ramps</strong> boost jump height (<strong class="text-sky-300">+40</strong>), <strong class="text-yellow-300">Coins</strong> add <strong class="text-yellow-300">+25</strong> &amp; coin count, and <strong class="text-sky-300">Shield Stars</strong> protect against one hit.</li>
+            </ul>
+            <button type="button" onclick="closeModal('howto-modal')"
+                class="btn-press mode-tile-gold w-full font-black text-xs py-2.5 rounded-2xl cursor-pointer">
+                Got It — Back to Street
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameover-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md glossy-panel border-2 border-amber-300 rounded-3xl p-5 sm:p-6 space-y-4 relative text-center">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-b from-amber-300 to-amber-500 border-2 border-amber-100 flex items-center justify-center text-3xl shadow-lg">
+                🛹
+            </div>
+            <h2 class="text-xl font-black text-amber-300 arcade-title">STREET WIPEOUT!</h2>
+
+            <div class="grid grid-cols-4 gap-1.5 bg-slate-950/75 border border-sky-300/25 rounded-2xl p-3">
+                <div>
+                    <span class="block text-[10px] uppercase text-sky-200/75 font-bold">Score</span>
+                    <span id="final-score" class="mono text-sm sm:text-base font-black text-white">0</span>
+                </div>
+                <div>
+                    <span class="block text-[10px] uppercase text-sky-200/75 font-bold">Best</span>
+                    <span id="final-best" class="mono text-sm sm:text-base font-black text-emerald-300">0</span>
+                </div>
+                <div>
+                    <span class="block text-[10px] uppercase text-sky-200/75 font-bold">Coins</span>
+                    <span id="final-coins" class="mono text-sm sm:text-base font-black text-yellow-300">0</span>
+                </div>
+                <div>
+                    <span class="block text-[10px] uppercase text-sky-200/75 font-bold">Dodges</span>
+                    <span id="final-dodges" class="mono text-sm sm:text-base font-black text-amber-300">0</span>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <button type="button" onclick="startGame()"
+                    class="btn-press mode-tile-gold w-full font-black text-sm py-3 rounded-2xl cursor-pointer">
+                    🔄 Skate Again
+                </button>
+                <a id="share-wa-btn" href="https://wa.me/23276655025" target="_blank" rel="noopener noreferrer"
+                    class="btn-press mode-tile w-full font-black text-xs sm:text-sm text-white py-2.5 rounded-2xl flex items-center justify-center gap-2">
+                    <span>💬</span>
+                    <span>Share Score on WhatsApp (+23276655025)</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* =====================================================================
+           ALFRED ENTERPRISE — IDA STREET SKATING ARCADE ENGINE
+           ===================================================================== */
+        const WA_NUMBER = "23276655025";
+        const BEST_SCORE_KEY = "alfred_ida_skate_best_v2";
+        const LANE_COUNT = 3;
+        const LOGICAL_W = 480;
+        const LOGICAL_H = 640;
+
+        const canvas = document.getElementById("skate-canvas");
+        const ctx = canvas.getContext("2d");
+
+        let audioCtx = null;
+        let muted = false;
+        let asphaltPattern = null;
+
+        // Procedural asphalt surface texture for IDA Street
+        function getAsphaltPattern() {
+            if (asphaltPattern) return asphaltPattern;
+            try {
+                const pCanvas = document.createElement("canvas");
+                pCanvas.width = 64;
+                pCanvas.height = 64;
+                const pCtx = pCanvas.getContext("2d");
+                pCtx.fillStyle = "#1e293b";
+                pCtx.fillRect(0, 0, 64, 64);
+                for (let i = 0; i < 260; i++) {
+                    const gx = Math.floor(Math.random() * 64);
+                    const gy = Math.floor(Math.random() * 64);
+                    pCtx.fillStyle = i % 2 === 0 ? "rgba(255,255,255,0.035)" : "rgba(2,6,23,0.18)";
+                    pCtx.fillRect(gx, gy, 2, 2);
+                }
+                asphaltPattern = ctx.createPattern(pCanvas, "repeat");
+            } catch (err) {
+                asphaltPattern = null;
+            }
+            return asphaltPattern;
+        }
+
+        // Muteable WebAudio sound effects
+        function playSound(kind) {
+            if (muted) return;
+            try {
+                if (!audioCtx) {
+                    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtor) audioCtx = new AudioCtor();
+                }
+                if (audioCtx && audioCtx.state === "suspended") {
+                    audioCtx.resume().catch(() => {});
+                }
+                if (!audioCtx) return;
+
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                if (kind === "lane") {
+                    osc.type = "triangle";
+                    osc.frequency.setValueAtTime(340, now);
+                    osc.frequency.exponentialRampToValueAtTime(520, now + 0.07);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (kind === "jump") {
+                    osc.type = "sine";
+                    osc.frequency.setValueAtTime(260, now);
+                    osc.frequency.exponentialRampToValueAtTime(660, now + 0.16);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.17);
+                } else if (kind === "dodge") {
+                    osc.type = "sine";
+                    osc.frequency.setValueAtTime(740, now);
+                    osc.frequency.exponentialRampToValueAtTime(980, now + 0.08);
+                    gain.gain.setValueAtTime(0.06, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.09);
+                } else if (kind === "coin") {
+                    osc.type = "sine";
+                    osc.frequency.setValueAtTime(880, now);
+                    osc.frequency.setValueAtTime(1174.66, now + 0.06);
+                    gain.gain.setValueAtTime(0.09, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.16);
+                } else if (kind === "star") {
+                    osc.type = "triangle";
+                    osc.frequency.setValueAtTime(659.25, now);
+                    osc.frequency.setValueAtTime(880, now + 0.07);
+                    osc.frequency.setValueAtTime(1318.5, now + 0.14);
+                    gain.gain.setValueAtTime(0.11, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (kind === "crash") {
+                    osc.type = "sawtooth";
+                    osc.frequency.setValueAtTime(190, now);
+                    osc.frequency.exponentialRampToValueAtTime(52, now + 0.28);
+                    gain.gain.setValueAtTime(0.13, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+            } catch (err) {
+                // Ignore WebAudio restrictions on mobile devices
+            }
+        }
+
+        function toggleMute() {
+            muted = !muted;
+            document.getElementById("mute-btn").textContent = muted ? "🔇" : "🔊";
+        }
+
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove("hidden");
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add("hidden");
+        }
+
+        function loadBestScore() {
+            try {
+                return parseInt(localStorage.getItem(BEST_SCORE_KEY) || "0", 10) || 0;
+            } catch (err) {
+                return 0;
+            }
+        }
+
+        function saveBestScore(val) {
+            try {
+                localStorage.setItem(BEST_SCORE_KEY, String(val));
+            } catch (err) {}
+        }
+
+        const STOREFRONT_SIGNS = ["ALFRED ENT.", "IDA MARKET", "KENEMA MART", "EXPRESS SHOP"];
+
+        const state = {
+            running: false,
+            paused: false,
+            gameOver: false,
+            score: 0,
+            bestScore: loadBestScore(),
+            coins: 0,
+            dodges: 0,
+            speed: 350,
+            stripeOffset: 0,
+            sceneryOffset: 0,
+            spawnTimer: 0.35,
+            bannerTimer: 0,
+            bannerText: "",
+            bannerColor: "#fde047",
+            skater: {
+                lane: 1,
+                x: LOGICAL_W * 0.5,
+                targetX: LOGICAL_W * 0.5,
+                lean: 0,
+                stridePhase: 0,
+                z: 0,
+                vz: 0,
+                crouching: false,
+                shieldTimer: 0
+            },
+            entities: [],
+            buildings: [],
+            particles: []
+        };
+
+        function initBuildings() {
+            state.buildings = [];
+            for (let i = 0; i < 6; i++) {
+                state.buildings.push({
+                    y: i * 130 - 100,
+                    h: 108,
+                    leftTone: i % 2 === 0 ? "#1e3a8a" : "#0f172a",
+                    rightTone: i % 2 === 0 ? "#0f172a" : "#1e3a8a",
+                    leftSign: STOREFRONT_SIGNS[i % STOREFRONT_SIGNS.length],
+                    rightSign: STOREFRONT_SIGNS[(i + 2) % STOREFRONT_SIGNS.length]
+                });
+            }
+        }
+
+        function getLaneCenters() {
+            const trackLeft = LOGICAL_W * 0.18;
+            const trackWidth = LOGICAL_W * 0.64;
+            const laneW = trackWidth / LANE_COUNT;
+            return {
+                trackLeft,
+                trackWidth,
+                laneW,
+                centers: [0, 1, 2].map(i => trackLeft + (i + 0.5) * laneW)
+            };
+        }
+
+        function showBanner(text, color = "#fde047", duration = 0.85) {
+            state.bannerText = text;
+            state.bannerColor = color;
+            state.bannerTimer = duration;
+        }
+
+        function syncHud() {
+            document.getElementById("score-display").textContent = String(Math.floor(state.score));
+            document.getElementById("best-display").textContent = String(Math.floor(state.bestScore));
+            document.getElementById("coins-display").textContent = String(state.coins);
+            document.getElementById("dodge-display").textContent = String(state.dodges);
+            document.getElementById("pause-btn").textContent = state.paused ? "▶" : "⏸";
+        }
+
+        function spawnParticles(x, y, color, count = 12) {
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
+                const spd = 65 + Math.random() * 145;
+                state.particles.push({
+                    x,
+                    y,
+                    vx: Math.cos(angle) * spd,
+                    vy: Math.sin(angle) * spd,
+                    life: 0.45 + Math.random() * 0.2,
+                    maxLife: 0.65,
+                    color
+                });
+            }
+        }
+
+        function startGame() {
+            const { centers } = getLaneCenters();
+            state.running = true;
+            state.paused = false;
+            state.gameOver = false;
+            state.score = 0;
+            state.coins = 0;
+            state.dodges = 0;
+            state.speed = 350;
+            state.stripeOffset = 0;
+            state.sceneryOffset = 0;
+            state.spawnTimer = 0.3;
+            state.bannerTimer = 0;
+            state.bannerText = "";
+            state.entities = [];
+            state.particles = [];
+            initBuildings();
+
+            state.skater.lane = 1;
+            state.skater.x = centers[1];
+            state.skater.targetX = centers[1];
+            state.skater.lean = 0;
+            state.skater.stridePhase = 0;
+            state.skater.z = 0;
+            state.skater.vz = 0;
+            state.skater.crouching = false;
+            state.skater.shieldTimer = 0;
+
+            closeModal("start-overlay");
+            closeModal("pause-overlay");
+            closeModal("gameover-modal");
+            syncHud();
+            playSound("jump");
+        }
+
+        function togglePause() {
+            if (!state.running || state.gameOver) return;
+            state.paused = !state.paused;
+            document.getElementById("pause-overlay").classList.toggle("hidden", !state.paused);
+            syncHud();
+        }
+
+        function handleLeftAction() {
+            if (!state.running || state.paused || state.gameOver) return;
+            if (state.skater.lane > 0) {
+                state.skater.lane -= 1;
+                state.skater.targetX = getLaneCenters().centers[state.skater.lane];
+                playSound("lane");
+            }
+        }
+
+        function handleRightAction() {
+            if (!state.running || state.paused || state.gameOver) return;
+            if (state.skater.lane < LANE_COUNT - 1) {
+                state.skater.lane += 1;
+                state.skater.targetX = getLaneCenters().centers[state.skater.lane];
+                playSound("lane");
+            }
+        }
+
+        function handleJumpAction() {
+            if (!state.running || state.paused || state.gameOver) return;
+            if (state.skater.z <= 1) {
+                state.skater.vz = 600;
+                state.skater.z = 2;
+                state.skater.crouching = false;
+                playSound("jump");
+            }
+        }
+
+        function setCrouch(active) {
+            if (!state.running || state.paused || state.gameOver) {
+                state.skater.crouching = false;
+                return;
+            }
+            state.skater.crouching = Boolean(active);
+        }
+
+        function triggerRampBoost() {
+            state.skater.vz = 780;
+            state.skater.z = Math.max(state.skater.z, 8);
+            state.skater.crouching = false;
+            state.score += 40;
+            showBanner("▲ RAMP OLLIE +40 ▲", "#38bdf8", 0.9);
+            spawnParticles(state.skater.x, LOGICAL_H * 0.76 - state.skater.z, "#38bdf8", 14);
+            playSound("jump");
+        }
+
+        function spawnTrafficWave() {
+            const lane = Math.floor(Math.random() * LANE_COUNT);
+            const roll = Math.random();
+            let type = "car";
+            let relSpeed = 0.2;
+            let color = "#ef4444";
+            let weaveAmp = 0;
+
+            const carColors = ["#ef4444", "#f59e0b", "#10b981", "#38bdf8", "#f8fafc", "#a855f7"];
+            const bikeColors = ["#f97316", "#eab308", "#22c55e", "#ec4899"];
+
+            if (roll < 0.28) {
+                type = "car";
+                relSpeed = Math.random() < 0.65 ? (0.14 + Math.random() * 0.16) : -0.18;
+                color = carColors[Math.floor(Math.random() * carColors.length)];
+            } else if (roll < 0.52) {
+                type = "bike";
+                relSpeed = Math.random() < 0.55 ? (0.12 + Math.random() * 0.16) : -0.26;
+                color = bikeColors[Math.floor(Math.random() * bikeColors.length)];
+                weaveAmp = Math.random() < 0.45 ? 10 : 0;
+            } else if (roll < 0.65) {
+                type = "cone";
+            } else if (roll < 0.76) {
+                type = "barrier";
+            } else if (roll < 0.86) {
+                type = "ramp";
+            } else if (roll < 0.96) {
+                type = "coin";
+            } else {
+                type = "star";
+            }
+
+            state.entities.push({
+                type,
+                lane,
+                y: -95,
+                relSpeed,
+                color,
+                weaveAmp,
+                weavePhase: Math.random() * Math.PI * 2,
+                dodged: false,
+                hit: false
+            });
+
+            if ((type === "car" || type === "bike" || type === "cone" || type === "barrier") && Math.random() < 0.68) {
+                const safeLane = (lane + 1 + Math.floor(Math.random() * 2)) % LANE_COUNT;
+                state.entities.push({
+                    type: "coin",
+                    lane: safeLane,
+                    y: -130,
+                    relSpeed: 0,
+                    color: "#facc15",
+                    weaveAmp: 0,
+                    weavePhase: 0,
+                    dodged: false,
+                    hit: false
+                });
+            }
+        }
+
+        function endGame() {
+            state.running = false;
+            state.paused = false;
+            state.gameOver = true;
+            state.skater.crouching = false;
+            playSound("crash");
+
+            const finalScore = Math.floor(state.score);
+            if (finalScore > state.bestScore) {
+                state.bestScore = finalScore;
+                saveBestScore(state.bestScore);
+            }
+            syncHud();
+
+            spawnParticles(state.skater.x, LOGICAL_H * 0.76 - state.skater.z, "#ef4444", 22);
+
+            document.getElementById("final-score").textContent = String(finalScore);
+            document.getElementById("final-best").textContent = String(Math.floor(state.bestScore));
+            document.getElementById("final-coins").textContent = String(state.coins);
+            document.getElementById("final-dodges").textContent = String(state.dodges);
+            document.getElementById("share-wa-btn").href =
+                `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
+                    `Hello Alfred Enterprise (IDA, Kenema City)! 🛹\nI scored ${finalScore} pts (${state.coins} coins, ${state.dodges} dodges) on IDA Street Skate!`
+                )}`;
+
+            openModal("gameover-modal");
+        }
+
+        function update(dt) {
+            if (!state.running || state.paused || state.gameOver) {
+                updateParticles(dt);
+                return;
+            }
+
+            state.speed = Math.min(780, state.speed + dt * 11.5);
+            state.score += dt * (state.speed * 0.085);
+            state.stripeOffset = (state.stripeOffset + state.speed * dt) % 64;
+            state.sceneryOffset = (state.sceneryOffset + state.speed * dt) % 130;
+
+            state.buildings.forEach(b => {
+                b.y += state.speed * dt;
+                if (b.y > LOGICAL_H + 40) {
+                    b.y -= 6 * 130;
+                }
+            });
+
+            if (state.bannerTimer > 0) {
+                state.bannerTimer = Math.max(0, state.bannerTimer - dt);
+            }
+            if (state.skater.shieldTimer > 0) {
+                state.skater.shieldTimer = Math.max(0, state.skater.shieldTimer - dt);
+            }
+
+            const prevX = state.skater.x;
+            const dx = state.skater.targetX - state.skater.x;
+            state.skater.x += dx * Math.min(1, dt * 18);
+            const vxScreen = (state.skater.x - prevX) / Math.max(dt, 0.001);
+            const targetLean = Math.max(-1, Math.min(1, vxScreen / 260));
+            state.skater.lean += (targetLean - state.skater.lean) * Math.min(1, dt * 14);
+            state.skater.stridePhase += dt * (8 + state.speed * 0.015);
+
+            if (state.skater.z > 0 || state.skater.vz !== 0) {
+                state.skater.z += state.skater.vz * dt;
+                state.skater.vz -= 1680 * dt;
+                if (state.skater.z <= 0) {
+                    state.skater.z = 0;
+                    state.skater.vz = 0;
+                }
+            }
+
+            state.spawnTimer -= dt;
+            if (state.spawnTimer <= 0) {
+                spawnTrafficWave();
+                const minInterval = Math.max(0.45, 1.02 - (state.speed - 350) / 920);
+                state.spawnTimer = minInterval + Math.random() * 0.26;
+            }
+
+            const { centers, laneW } = getLaneCenters();
+            const skaterY = LOGICAL_H * 0.76;
+
+            for (let i = state.entities.length - 1; i >= 0; i--) {
+                const ent = state.entities[i];
+                const effectiveSpeed = state.speed * (1 - (ent.relSpeed || 0));
+                ent.y += Math.max(115, effectiveSpeed) * dt;
+                ent.weavePhase += dt * 4.5;
+
+                const weaveOffset = ent.weaveAmp ? Math.sin(ent.weavePhase) * ent.weaveAmp : 0;
+                const ex = centers[ent.lane] + weaveOffset;
+
+                const isTraffic = ent.type === "car" || ent.type === "bike";
+                const halfX = ent.type === "car" ? 33 : ent.type === "bike" ? 26 : 30;
+                const halfY = ent.type === "car" ? 42 : ent.type === "bike" ? 32 : 30;
+
+                const sameLane = Math.abs(state.skater.x - ex) < halfX;
+                const nearY = Math.abs(skaterY - ent.y) < halfY;
+
+                if (isTraffic && !ent.dodged && !ent.hit && ent.y > skaterY + halfY && Math.abs(state.skater.x - ex) < laneW * 1.15) {
+                    ent.dodged = true;
+                    state.dodges += 1;
+                    state.score += 25;
+                    showBanner("⚡ TRAFFIC DODGE +25 ⚡", "#fde047", 0.75);
+                    playSound("dodge");
+                }
+
+                if (!ent.hit && sameLane && nearY) {
+                    if (ent.type === "coin") {
+                        ent.hit = true;
+                        state.coins += 1;
+                        state.score += 25;
+                        spawnParticles(ex, ent.y, "#facc15", 10);
+                        playSound("coin");
+                        state.entities.splice(i, 1);
+                        continue;
+                    }
+                    if (ent.type === "star") {
+                        ent.hit = true;
+                        state.score += 50;
+                        state.skater.shieldTimer = 2.6;
+                        showBanner("★ SHIELD ACTIVE +50 ★", "#38bdf8", 1.1);
+                        spawnParticles(ex, ent.y, "#38bdf8", 18);
+                        playSound("star");
+                        state.entities.splice(i, 1);
+                        continue;
+                    }
+                    if (ent.type === "ramp") {
+                        ent.hit = true;
+                        triggerRampBoost();
+                        state.entities.splice(i, 1);
+                        continue;
+                    }
+                    if (ent.type === "cone" || ent.type === "barrier" || isTraffic) {
+                        const clearHeight = ent.type === "cone" ? 18 : ent.type === "bike" ? 34 : 58;
+                        if (state.skater.z < clearHeight) {
+                            if (state.skater.shieldTimer > 0) {
+                                ent.hit = true;
+                                state.skater.shieldTimer = 0;
+                                showBanner("🛡️ SHIELD BLOCKED!", "#38bdf8", 0.9);
+                                spawnParticles(ex, ent.y, "#38bdf8", 16);
+                                playSound("dodge");
+                                state.entities.splice(i, 1);
+                                continue;
+                            }
+                            ent.hit = true;
+                            endGame();
+                            return;
+                        }
+                    }
+                }
+
+                if (ent.y > LOGICAL_H + 120) {
+                    state.entities.splice(i, 1);
+                }
+            }
+
+            updateParticles(dt);
+
+            const currentIntScore = Math.floor(state.score);
+            if (currentIntScore > state.bestScore) {
+                state.bestScore = currentIntScore;
+                saveBestScore(state.bestScore);
+            }
+            syncHud();
+        }
+
+        function updateParticles(dt) {
+            for (let i = state.particles.length - 1; i >= 0; i--) {
+                const pt = state.particles[i];
+                pt.x += pt.vx * dt;
+                pt.y += pt.vy * dt;
+                pt.life -= dt;
+                if (pt.life <= 0) {
+                    state.particles.splice(i, 1);
+                }
+            }
+        }
+
+        function render() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            if (canvas.width !== LOGICAL_W * dpr) {
+                canvas.width = LOGICAL_W * dpr;
+                canvas.height = LOGICAL_H * dpr;
+            }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            const { trackLeft, trackWidth, laneW, centers } = getLaneCenters();
+
+            // Sidewalks & IDA Street storefronts
+            ctx.fillStyle = "#334155";
+            ctx.fillRect(0, 0, trackLeft - 8, LOGICAL_H);
+            ctx.fillRect(trackLeft + trackWidth + 8, 0, LOGICAL_W - (trackLeft + trackWidth + 8), LOGICAL_H);
+
+            state.buildings.forEach(b => {
+                ctx.fillStyle = b.leftTone;
+                ctx.fillRect(4, b.y, trackLeft - 18, b.h);
+                ctx.strokeStyle = "#93c5fd";
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(4, b.y, trackLeft - 18, b.h);
+
+                ctx.fillStyle = "#f59e0b";
+                ctx.fillRect(8, b.y + 10, trackLeft - 26, 18);
+                ctx.fillStyle = "#0f172a";
+                ctx.font = "900 8px Inter, sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(b.leftSign, (trackLeft - 10) * 0.5, b.y + 22);
+
+                const rx = trackLeft + trackWidth + 14;
+                const rw = LOGICAL_W - rx - 4;
+                ctx.fillStyle = b.rightTone;
+                ctx.fillRect(rx, b.y, rw, b.h);
+                ctx.strokeStyle = "#93c5fd";
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(rx, b.y, rw, b.h);
+
+                ctx.fillStyle = "#facc15";
+                ctx.fillRect(rx + 4, b.y + 10, rw - 8, 18);
+                ctx.fillStyle = "#0f172a";
+                ctx.fillText(b.rightSign, rx + rw * 0.5, b.y + 22);
+            });
+
+            // Scrolling curb trees & lights
+            for (let sy = -130 + state.sceneryOffset; sy < LOGICAL_H + 130; sy += 130) {
+                ctx.fillStyle = "#16a34a";
+                ctx.beginPath();
+                ctx.arc(trackLeft - 14, sy + 64, 9, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = "#fde047";
+                ctx.beginPath();
+                ctx.arc(trackLeft + trackWidth + 14, sy + 64, 5.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Street surface
+            ctx.fillStyle = getAsphaltPattern() || "#1e293b";
+            ctx.fillRect(trackLeft, 0, trackWidth, LOGICAL_H);
+
+            // Curbs & road border
+            ctx.fillStyle = "#94a3b8";
+            ctx.fillRect(trackLeft - 8, 0, 8, LOGICAL_H);
+            ctx.fillRect(trackLeft + trackWidth, 0, 8, LOGICAL_H);
+            ctx.fillStyle = "#f59e0b";
+            ctx.fillRect(trackLeft - 8, 0, 3, LOGICAL_H);
+            ctx.fillRect(trackLeft + trackWidth + 5, 0, 3, LOGICAL_H);
+
+            // IDA Street sign
+            ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+            ctx.beginPath();
+            ctx.roundRect(trackLeft + trackWidth * 0.5 - 56, 8, 112, 20, 8);
+            ctx.fill();
+            ctx.strokeStyle = "#fbbf24";
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+            ctx.fillStyle = "#fde047";
+            ctx.font = "800 9px Inter, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("IDA ST • KENEMA", trackLeft + trackWidth * 0.5, 18);
+
+            // Lane dividers
+            ctx.strokeStyle = "rgba(254, 240, 138, 0.45)";
+            ctx.lineWidth = 3;
+            ctx.setLineDash([28, 36]);
+            ctx.lineDashOffset = -state.stripeOffset;
+            for (let l = 1; l < LANE_COUNT; l++) {
+                const lx = trackLeft + l * laneW;
+                ctx.beginPath();
+                ctx.moveTo(lx, 0);
+                ctx.lineTo(lx, LOGICAL_H);
+                ctx.stroke();
+            }
+            ctx.setLineDash([]);
+
+            // Traffic & street items
+            state.entities.forEach(ent => {
+                const weaveOffset = ent.weaveAmp ? Math.sin(ent.weavePhase) * ent.weaveAmp : 0;
+                const ex = centers[ent.lane] + weaveOffset;
+                const ey = ent.y;
+
+                if (ent.type === "car") {
+                    ctx.fillStyle = "rgba(2, 6, 23, 0.48)";
+                    ctx.beginPath();
+                    ctx.roundRect(ex - 25, ey - 32, 50, 74, 12);
+                    ctx.fill();
+
+                    ctx.fillStyle = "#090d16";
+                    [-24, 24].forEach(wy => {
+                        ctx.fillRect(ex - 27, ey + wy - 6, 4, 12);
+                        ctx.fillRect(ex + 23, ey + wy - 6, 4, 12);
+                    });
+
+                    ctx.fillStyle = ent.color;
+                    ctx.beginPath();
+                    ctx.roundRect(ex - 24, ey - 38, 48, 72, 11);
+                    ctx.fill();
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.fillStyle = "#0f172a";
+                    ctx.beginPath();
+                    ctx.roundRect(ex - 18, ey - 22, 36, 15, 4);
+                    ctx.roundRect(ex - 17, ey + 6, 34, 12, 4);
+                    ctx.fill();
+
+                    ctx.fillStyle = "#fef08a";
+                    ctx.fillRect(ex - 19, ey - 37, 8, 4);
+                    ctx.fillRect(ex + 11, ey - 37, 8, 4);
+                    ctx.fillStyle = "#ef4444";
+                    ctx.fillRect(ex - 19, ey + 30, 8, 4);
+                    ctx.fillRect(ex + 11, ey + 30, 8, 4);
+                } else if (ent.type === "bike") {
+                    ctx.fillStyle = "rgba(2, 6, 23, 0.45)";
+                    ctx.beginPath();
+                    ctx.ellipse(ex, ey + 24, 15, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = "#090d16";
+                    ctx.beginPath();
+                    ctx.ellipse(ex, ey - 21, 5.5, 9, 0, 0, Math.PI * 2);
+                    ctx.ellipse(ex, ey + 19, 5.5, 9, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = ent.color;
+                    ctx.beginPath();
+                    ctx.roundRect(ex - 7.5, ey - 14, 15, 28, 6);
+                    ctx.fill();
+
+                    ctx.fillStyle = "#fef08a";
+                    ctx.beginPath();
+                    ctx.arc(ex, ey - 28, 4.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = "#1e293b";
+                    ctx.beginPath();
+                    ctx.roundRect(ex - 10, ey - 6, 20, 14, 5);
+                    ctx.fill();
+                    ctx.fillStyle = "#f8fafc";
+                    ctx.beginPath();
+                    ctx.arc(ex, ey - 12, 7.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = "#0f172a";
+                    ctx.lineWidth = 1.8;
+                    ctx.stroke();
+                } else if (ent.type === "ramp") {
+                    ctx.fillStyle = "#0284c7";
+                    ctx.beginPath();
+                    ctx.roundRect(ex - 26, ey - 18, 52, 36, 8);
+                    ctx.fill();
+                    ctx.strokeStyle = "#fde047";
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+
+                    ctx.fillStyle = "#fde047";
+                    ctx.font = "900 12px Inter, sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText("▲▲▲", ex, ey);
+                } else if (ent.type === "coin") {
+                    ctx.fillStyle = "#facc15";
+                    ctx.beginPath();
+                    ctx.arc(ex, ey, 13, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = "#fef9c3";
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+
+                    ctx.fillStyle = "#854d0e";
+                    ctx.font = "900 10px Inter, sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText("AE", ex, ey + 0.5);
+                } else if (ent.type === "star") {
+                    ctx.fillStyle = "#38bdf8";
+                    ctx.beginPath();
+                    ctx.arc(ex, ey, 16, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "900 14px sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText("★", ex, ey + 1);
+                } else if (ent.type === "cone") {
+                    ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+                    ctx.beginPath();
+                    ctx.ellipse(ex, ey + 11, 14, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = "#f97316";
+                    ctx.beginPath();
+                    ctx.moveTo(ex, ey - 18);
+                    ctx.lineTo(ex - 14, ey + 10);
+                    ctx.lineTo(ex + 14, ey + 10);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else if (ent.type === "barrier") {
+                    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+                    ctx.fillRect(ex - 28, ey + 6, 56, 10);
+
+                    ctx.fillStyle = "#dc2626";
+                    ctx.beginPath();
+                    ctx.roundRect(ex - 28, ey - 14, 56, 22, 6);
+                    ctx.fill();
+                    ctx.strokeStyle = "#fde047";
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "900 10px Inter, sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText("STOP", ex, ey - 3);
+                }
+            });
+
+            // Articulated human skater
+            const baseY = LOGICAL_H * 0.76;
+            const shadowScale = Math.max(0.45, 1 - state.skater.z / 180);
+            ctx.fillStyle = "rgba(2, 6, 23, 0.5)";
+            ctx.beginPath();
+            ctx.ellipse(state.skater.x, baseY + 21, 24 * shadowScale, 9 * shadowScale, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            const sy = baseY - state.skater.z;
+            const sx = state.skater.x;
+            const isAirborne = state.skater.z > 2;
+            const tuckOffset = state.skater.crouching ? 7 : (isAirborne ? 3 : Math.sin(state.skater.stridePhase) * 2.5);
+            const legSwing = isAirborne ? 5 : Math.sin(state.skater.stridePhase) * 6;
+            const armSwing = isAirborne ? -7 : -Math.sin(state.skater.stridePhase) * 7;
+
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(state.skater.lean * 0.14);
+
+            if (state.skater.shieldTimer > 0) {
+                ctx.strokeStyle = "#38bdf8";
+                ctx.lineWidth = 3.5;
+                ctx.beginPath();
+                ctx.arc(0, -10, 34, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = "#facc15";
+            ctx.beginPath();
+            ctx.roundRect(-24, 9, 48, 9, 4.5);
+            ctx.fill();
+            ctx.strokeStyle = "#0f172a";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = "#0f172a";
+            [-14, 14].forEach(wx => {
+                ctx.beginPath();
+                ctx.arc(wx, 20, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.strokeStyle = "#1e293b";
+            ctx.lineWidth = 6;
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.moveTo(-4, -2 + tuckOffset);
+            ctx.lineTo(-8 - legSwing * 0.6, 10);
+            ctx.moveTo(4, -2 + tuckOffset);
+            ctx.lineTo(8 + legSwing * 0.5, 10);
+            ctx.stroke();
+
+            ctx.fillStyle = "#38bdf8";
+            ctx.beginPath();
+            ctx.roundRect(-11, -22 + tuckOffset, 22, 21, 7);
+            ctx.fill();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.strokeStyle = "#f8fafc";
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(-11, -18 + tuckOffset);
+            ctx.lineTo(-20, -10 + armSwing);
+            ctx.moveTo(11, -18 + tuckOffset);
+            ctx.lineTo(20, -10 - armSwing);
+            ctx.stroke();
+
+            ctx.fillStyle = "#fed7aa";
+            ctx.beginPath();
+            ctx.arc(0, -31 + tuckOffset, 9, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#f59e0b";
+            ctx.beginPath();
+            ctx.arc(0, -34 + tuckOffset, 9.5, Math.PI, 0);
+            ctx.fill();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 1.8;
+            ctx.stroke();
+
+            ctx.restore();
+
+            state.particles.forEach(pt => {
+                ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
+                ctx.fillStyle = pt.color;
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            if (state.bannerTimer > 0 && state.bannerText) {
+                ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
+                ctx.beginPath();
+                ctx.roundRect(LOGICAL_W * 0.5 - 112, 34, 224, 28, 12);
+                ctx.fill();
+                ctx.fillStyle = state.bannerColor;
+                ctx.font = "800 11px Inter, sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(state.bannerText, LOGICAL_W * 0.5, 48);
+            }
+        }
+
+        // Keyboard controls
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+                e.preventDefault();
+                handleLeftAction();
+            } else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+                e.preventDefault();
+                handleRightAction();
+            } else if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
+                e.preventDefault();
+                setCrouch(true);
+            } else if (e.key === "p" || e.key === "P" || e.key === "Escape") {
+                if (state.running && !state.gameOver) {
+                    e.preventDefault();
+                    togglePause();
+                }
+            } else if (e.key === " " || e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
+                e.preventDefault();
+                if (!state.running && !state.gameOver) {
+                    startGame();
+                } else if (!state.paused) {
+                    handleJumpAction();
+                }
+            }
+        });
+
+        window.addEventListener("keyup", (e) => {
+            if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
+                setCrouch(false);
+            }
+        });
+
+        // Mobile touch swipe / tap controls on canvas
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        canvas.addEventListener("touchstart", (e) => {
+            if (!e.touches || !e.touches.length) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        canvas.addEventListener("touchend", (e) => {
+            if (!e.changedTouches || !e.changedTouches.length) return;
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            const dy = e.changedTouches[0].clientY - touchStartY;
+            const absX = Math.abs(dx);
+            const absY = Math.abs(dy);
+
+            if (absX < 18 && absY < 18) {
+                handleJumpAction();
+                return;
+            }
+            if (absX > absY) {
+                if (dx < -18) handleLeftAction();
+                else if (dx > 18) handleRightAction();
+            } else if (dy < -18) {
+                handleJumpAction();
+            } else if (dy > 18) {
+                setCrouch(true);
+                setTimeout(() => setCrouch(false), 320);
+            }
+        }, { passive: true });
+
+        let lastTime = performance.now();
+        function gameLoop(now) {
+            const dt = Math.min(0.05, (now - lastTime) / 1000);
+            lastTime = now;
+            update(dt);
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            const { centers } = getLaneCenters();
+            state.skater.x = centers[1];
+            state.skater.targetX = centers[1];
+            initBuildings();
+            syncHud();
+            requestAnimationFrame(gameLoop);
+        });
+    </script>
+</body>
+</html>
+```
