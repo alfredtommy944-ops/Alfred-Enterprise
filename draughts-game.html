@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alfred Enterprise — Draughts Arena</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 50% 0%, #2563eb 0%, #1d4ed8 44%, #0f172a 100%);
+            color: #ffffff;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .arcade-title {
+            text-shadow: 0 3px 0 rgba(15, 23, 42, 0.55), 0 0 18px rgba(250, 204, 21, 0.35);
+        }
+        .glossy-panel {
+            background: linear-gradient(180deg, rgba(30, 58, 138, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+            border: 2px solid rgba(147, 197, 253, 0.35);
+            box-shadow: 0 12px 28px rgba(2, 6, 23, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+        }
+        .tile-gold {
+            background: linear-gradient(180deg, #fde047 0%, #eab308 100%);
+            border: 2px solid #fef9c3;
+            box-shadow: 0 4px 0 #a16207, 0 8px 16px rgba(2, 6, 23, 0.35);
+            color: #0f172a;
+        }
+        .tile-blue {
+            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+            border: 2px solid #bae6fd;
+            box-shadow: 0 4px 0 #0369a1, 0 8px 16px rgba(2, 6, 23, 0.35);
+            color: #ffffff;
+        }
+        .btn-press { transition: transform 0.1s ease, filter 0.15s ease; }
+        .btn-press:active { transform: translateY(2px); }
+        #board-wrap {
+            width: 100%;
+            max-width: 450px;
+            aspect-ratio: 1 / 1;
+            margin: 0 auto;
+        }
+        #draughts-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 14px;
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-2.5 sm:p-4">
+
+    <!-- Header -->
+    <header class="w-full max-w-4xl mx-auto glossy-panel rounded-3xl px-3.5 py-2.5 flex items-center justify-between gap-2.5">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-b from-amber-300 via-amber-400 to-orange-500 border-2 border-amber-100 flex items-center justify-center text-slate-950 font-black text-base shadow-lg shrink-0">
+                AE
+            </div>
+            <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h1 class="text-sm sm:text-base font-black tracking-wide text-amber-300 arcade-title truncate">DRAUGHTS • ALFRED ENTERPRISE</h1>
+                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-sky-400/20 text-sky-200 border border-sky-300/40">
+                        IDA, Kenema
+                    </span>
+                </div>
+                <p class="text-[11px] text-sky-100/80 truncate">8×8 Classic Board • 2-Player &amp; VS Computer • Mandatory Jumps</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+            <button type="button" onclick="openRulesModal()"
+                class="btn-press bg-sky-500/25 hover:bg-sky-500/35 border border-sky-300/50 text-sky-100 text-xs font-extrabold px-2.5 py-2 rounded-xl">
+                ? Rules
+            </button>
+            <button id="mute-btn" type="button" onclick="toggleMute()" aria-label="Toggle Sound"
+                class="btn-press bg-slate-900/70 hover:bg-slate-800 border border-sky-300/30 text-white px-2.5 py-2 rounded-xl text-xs font-bold">
+                🔊
+            </button>
+            <a href="./index.html"
+                class="btn-press tile-gold text-xs font-black px-3 py-2 rounded-xl flex items-center gap-1">
+                <span>Store</span>
+                <span>↗</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="w-full max-w-4xl mx-auto my-2.5 flex-1 flex flex-col gap-2.5">
+
+        <!-- Match & Board Theme Controls -->
+        <section class="glossy-panel rounded-3xl p-3 grid grid-cols-1 sm:grid-cols-4 gap-2.5 items-end">
+            <div>
+                <label for="mode-select" class="block text-[10px] uppercase tracking-wider text-sky-200 font-extrabold mb-1">
+                    Game Mode
+                </label>
+                <select id="mode-select" onchange="startNewGame()"
+                    class="w-full bg-slate-950/90 border-2 border-sky-400/40 rounded-2xl px-3 py-2 text-xs font-extrabold text-emerald-300 outline-none">
+                    <option value="pvp" selected>🤝 2 Players (Pass &amp; Play)</option>
+                    <option value="ai">🤖 VS Computer</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="theme-select" class="block text-[10px] uppercase tracking-wider text-sky-200 font-extrabold mb-1">
+                    Board Style
+                </label>
+                <select id="theme-select" onchange="drawBoard()"
+                    class="w-full bg-slate-950/90 border-2 border-sky-400/40 rounded-2xl px-3 py-2 text-xs font-extrabold text-amber-300 outline-none">
+                    <option value="wood" selected>🪵 Classic Wood</option>
+                    <option value="emerald">🌿 Meadow Green</option>
+                    <option value="slate">🌊 Slate &amp; Amber</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="ai-skill-select" class="block text-[10px] uppercase tracking-wider text-sky-200 font-extrabold mb-1">
+                    AI Difficulty
+                </label>
+                <select id="ai-skill-select"
+                    class="w-full bg-slate-950/90 border-2 border-sky-400/40 rounded-2xl px-3 py-2 text-xs font-extrabold text-sky-100 outline-none">
+                    <option value="casual">Casual</option>
+                    <option value="smart" selected>Smart</option>
+                </select>
+            </div>
+
+            <button type="button" onclick="startNewGame()"
+                class="btn-press tile-gold w-full font-black text-xs py-2.5 px-4 rounded-2xl">
+                🔄 New Match
+            </button>
+        </section>
+
+        <!-- Score & Turn Bar -->
+        <section class="glossy-panel rounded-3xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="bg-slate-950/80 border border-amber-300/40 rounded-2xl px-3 py-1.5 text-center">
+                    <span class="block text-[10px] uppercase text-amber-300 font-bold">Light</span>
+                    <span id="light-remaining" class="mono text-sm font-black">12</span>
+                </div>
+                <div class="bg-slate-950/80 border border-sky-300/40 rounded-2xl px-3 py-1.5 text-center">
+                    <span class="block text-[10px] uppercase text-sky-300 font-bold">Dark</span>
+                    <span id="dark-remaining" class="mono text-sm font-black">12</span>
+                </div>
+            </div>
+
+            <div class="text-center sm:text-right space-y-0.5 flex-1">
+                <div class="flex items-center justify-center sm:justify-end gap-2">
+                    <span id="turn-pill" class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-400/25 text-amber-200 border border-amber-300/50">
+                        Light Turn
+                    </span>
+                    <span id="jump-badge" class="hidden text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 border border-emerald-300/50">
+                        Capture Available!
+                    </span>
+                </div>
+                <p id="status-msg" class="text-xs sm:text-sm font-extrabold text-white">
+                    Tap a highlighted Light piece to move.
+                </p>
+            </div>
+        </section>
+
+        <!-- Framed 8x8 Draughts Board -->
+        <section class="glossy-panel rounded-3xl p-2.5 sm:p-4">
+            <div id="board-wrap">
+                <canvas id="draughts-canvas"></canvas>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <section class="glossy-panel rounded-2xl px-3.5 py-2.5 text-[11px] text-sky-100/85 flex flex-wrap items-center justify-between gap-2">
+            <span>📍 <strong class="text-amber-300">Alfred Enterprise</strong> • IDA, Kenema City • Classic Draughts Edition</span>
+            <a href="https://wa.me/23276655025?text=Hello%20Alfred%20Enterprise%20(IDA%2C%20Kenema)!%20I%20am%20playing%20Draughts%20on%20your%20website."
+                target="_blank" rel="noopener noreferrer" class="text-amber-300 font-extrabold underline">
+                💬 WhatsApp +23276655025
+            </a>
+        </section>
+    </main>
+
+    <!-- Rules Modal -->
+    <div id="rules-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md glossy-panel rounded-3xl p-5 sm:p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-sky-300/25 pb-2.5">
+                <h2 class="text-base font-black text-amber-300">📖 How to Play Draughts</h2>
+                <button type="button" onclick="closeRulesModal()" class="w-8 h-8 rounded-full bg-slate-900/80 text-sky-100 font-bold">✕</button>
+            </div>
+            <ul class="space-y-2.5 text-xs text-sky-50/90 leading-relaxed">
+                <li><strong class="text-amber-300">1. Diagonal Movement:</strong> Men move diagonally forward one square onto an empty dark square.</li>
+                <li><strong class="text-amber-300">2. Mandatory Captures &amp; Multi-Jumps:</strong> When a jump over an opponent piece is available, you must capture. If another jump opens up right after, keep jumping!</li>
+                <li><strong class="text-amber-300">3. Kings (♛):</strong> Reaching the far back row crowns your piece a King, allowing diagonal moves forward and backward.</li>
+                <li><strong class="text-amber-300">4. Winning:</strong> Capture all opponent pieces or block all of their legal moves to win the match.</li>
+            </ul>
+            <button type="button" onclick="closeRulesModal()" class="btn-press tile-gold w-full font-black text-xs py-2.5 rounded-2xl">
+                Got It — Play Now
+            </button>
+        </div>
+    </div>
+
+    <!-- Win Modal -->
+    <div id="win-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md glossy-panel border-2 border-amber-300 rounded-3xl p-5 sm:p-6 space-y-4 text-center">
+            <div class="w-14 h-14 mx-auto rounded-2xl tile-gold flex items-center justify-center text-3xl">🏆</div>
+            <p id="win-title" class="text-xl font-black text-amber-300 arcade-title">LIGHT WINS!</p>
+            <p id="win-subtitle" class="text-xs text-sky-50/90">Great match on the Alfred Enterprise Draughts board!</p>
+            <div class="space-y-2 pt-1">
+                <button type="button" onclick="closeWinModal(); startNewGame();" class="btn-press tile-gold w-full font-black text-xs py-3 rounded-2xl">
+                    Play Another Match
+                </button>
+                <a href="./index.html" class="btn-press tile-blue w-full font-black text-xs py-2.5 rounded-2xl block">
+                    Back to Store
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BOARD_THEMES = {
+            wood: {
+                frameLight: "#d99b52",
+                frameDark: "#8c5220",
+                lightSq: "#f5d7a1",
+                darkSq: "#a45c2a",
+                lightPiece: "#fef3c7",
+                lightRing: "#d97706",
+                darkPiece: "#3b2314",
+                darkRing: "#1c1917"
+            },
+            emerald: {
+                frameLight: "#4d7c0f",
+                frameDark: "#1a2e05",
+                lightSq: "#ecfccb",
+                darkSq: "#65a30d",
+                lightPiece: "#fffbeb",
+                lightRing: "#ca8a04",
+                darkPiece: "#14532d",
+                darkRing: "#052e16"
+            },
+            slate: {
+                frameLight: "#475569",
+                frameDark: "#0f172a",
+                lightSq: "#cbd5e1",
+                darkSq: "#334155",
+                lightPiece: "#fff7ed",
+                lightRing: "#ea580c",
+                darkPiece: "#0f172a",
+                darkRing: "#020617"
+            }
+        };
+
+        const canvas = document.getElementById("draughts-canvas");
+        const ctx = canvas.getContext("2d");
+
+        let audioCtx = null;
+        let muted = false;
+        let aiTimer = null;
+
+        // Board grid[r][c]: null | { side: "light" | "dark", king: boolean }
+        const state = {
+            grid: [],
+            turn: "light", // "light" (bottom, moves r-1) | "dark" (top, moves r+1)
+            mode: "pvp",
+            selected: null, // { r, c }
+            forcedChainFrom: null, // { r, c } when continuing a multi-jump
+            legalMoves: [],
+            gameOver: false
+        };
+
+        function tone(freq, dur, type = "triangle", vol = 0.07) {
+            if (muted) return;
+            try {
+                if (!audioCtx) {
+                    const Ctor = window.AudioContext || window.webkitAudioContext;
+                    if (Ctor) audioCtx = new Ctor();
+                }
+                if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+                if (!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + dur);
+            } catch (e) {}
+        }
+
+        function toggleMute() {
+            muted = !muted;
+            document.getElementById("mute-btn").textContent = muted ? "🔇" : "🔊";
+        }
+
+        function openRulesModal() {
+            document.getElementById("rules-modal").classList.remove("hidden");
+        }
+
+        function closeRulesModal() {
+            document.getElementById("rules-modal").classList.add("hidden");
+        }
+
+        function closeWinModal() {
+            document.getElementById("win-modal").classList.add("hidden");
+        }
+
+        function createInitialGrid() {
+            const g = Array.from({ length: 8 }, () => Array(8).fill(null));
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if ((r + c) % 2 === 1) g[r][c] = { side: "dark", king: false };
+                }
+            }
+            for (let r = 5; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if ((r + c) % 2 === 1) g[r][c] = { side: "light", king: false };
+                }
+            }
+            return g;
+        }
+
+        function getPieceMoves(grid, r, c, onlyJumps = false) {
+            const p = grid[r][c];
+            if (!p) return [];
+            const dirs = [];
+            if (p.side === "light" || p.king) dirs.push([-1, -1], [-1, 1]);
+            if (p.side === "dark" || p.king) dirs.push([1, -1], [1, 1]);
+
+            const jumps = [];
+            const steps = [];
+
+            for (const [dr, dc] of dirs) {
+                const jr = r + dr * 2;
+                const jc = c + dc * 2;
+                const mr = r + dr;
+                const mc = c + dc;
+                if (jr >= 0 && jr < 8 && jc >= 0 && jc < 8 && !grid[jr][jc]) {
+                    const mid = grid[mr][mc];
+                    if (mid && mid.side !== p.side) {
+                        jumps.push({ fromR: r, fromC: c, toR: jr, toC: jc, capR: mr, capC: mc, isJump: true });
+                    }
+                }
+                const sr = r + dr;
+                const sc = c + dc;
+                if (!onlyJumps && sr >= 0 && sr < 8 && sc >= 0 && sc < 8 && !grid[sr][sc]) {
+                    steps.push({ fromR: r, fromC: c, toR: sr, toC: sc, capR: null, capC: null, isJump: false });
+                }
+            }
+
+            if (jumps.length > 0) return jumps;
+            return onlyJumps ? [] : steps;
+        }
+
+        function getAllLegalMovesForSide(grid, side, chainFrom = null) {
+            if (chainFrom) {
+                return getPieceMoves(grid, chainFrom.r, chainFrom.c, true);
+            }
+            const allJumps = [];
+            const allSteps = [];
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const p = grid[r][c];
+                    if (!p || p.side !== side) continue;
+                    const mList = getPieceMoves(grid, r, c, false);
+                    for (const m of mList) {
+                        if (m.isJump) allJumps.push(m);
+                        else allSteps.push(m);
+                    }
+                }
+            }
+            return allJumps.length > 0 ? allJumps : allSteps;
+        }
+
+        function countPieces(grid, side) {
+            let n = 0;
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if (grid[r][c] && grid[r][c].side === side) n++;
+                }
+            }
+            return n;
+        }
+
+        function startNewGame() {
+            if (aiTimer) {
+                clearTimeout(aiTimer);
+                aiTimer = null;
+            }
+            state.grid = createInitialGrid();
+            state.turn = "light";
+            state.mode = document.getElementById("mode-select").value;
+            state.selected = null;
+            state.forcedChainFrom = null;
+            state.gameOver = false;
+            state.legalMoves = getAllLegalMovesForSide(state.grid, "light", null);
+
+            updateHUD("Light's turn — tap a Light piece to move.");
+            drawBoard();
+        }
+
+        function updateHUD(msg) {
+            const lCount = countPieces(state.grid, "light");
+            const dCount = countPieces(state.grid, "dark");
+            document.getElementById("light-remaining").textContent = String(lCount);
+            document.getElementById("dark-remaining").textContent = String(dCount);
+
+            const pill = document.getElementById("turn-pill");
+            pill.textContent = state.turn === "light" ? "Light Turn" : (state.mode === "ai" ? "Computer Turn" : "Dark Turn");
+            pill.className = state.turn === "light"
+                ? "text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-400/25 text-amber-200 border border-amber-300/50"
+                : "text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-sky-500/30 text-sky-200 border border-sky-300/50";
+
+            const hasJump = state.legalMoves.some(m => m.isJump);
+            document.getElementById("jump-badge").classList.toggle("hidden", !hasJump || state.gameOver);
+            document.getElementById("status-msg").textContent = msg;
+        }
+
+        function executeMove(move) {
+            const piece = state.grid[move.fromR][move.fromC];
+            state.grid[move.fromR][move.fromC] = null;
+            state.grid[move.toR][move.toC] = piece;
+
+            if (move.isJump && move.capR !== null) {
+                state.grid[move.capR][move.capC] = null;
+                tone(680, 0.11, "triangle", 0.09);
+            } else {
+                tone(460, 0.08, "sine", 0.07);
+            }
+
+            // Crown king if reaching opposite back row
+            if ((piece.side === "light" && move.toR === 0) || (piece.side === "dark" && move.toR === 7)) {
+                if (!piece.king) {
+                    piece.king = true;
+                    tone(820, 0.16, "triangle", 0.1);
+                }
+            }
+
+            // Check multi-jump continuation
+            if (move.isJump) {
+                const moreJumps = getPieceMoves(state.grid, move.toR, move.toC, true);
+                if (moreJumps.length > 0) {
+                    state.forcedChainFrom = { r: move.toR, c: move.toC };
+                    state.selected = { r: move.toR, c: move.toC };
+                    state.legalMoves = moreJumps;
+                    updateHUD("Multi-jump available! Capture again.");
+                    drawBoard();
+                    if (state.mode === "ai" && state.turn === "dark") {
+                        aiTimer = setTimeout(runAITurn, 420);
+                    }
+                    return;
+                }
+            }
+
+            state.forcedChainFrom = null;
+            state.selected = null;
+
+            const opponent = state.turn === "light" ? "dark" : "light";
+            const oppMoves = getAllLegalMovesForSide(state.grid, opponent, null);
+            const oppCount = countPieces(state.grid, opponent);
+
+            if (oppCount === 0 || oppMoves.length === 0) {
+                state.gameOver = true;
+                state.legalMoves = [];
+                updateHUD(`${state.turn === "light" ? "Light" : "Dark"} wins the match!`);
+                drawBoard();
+                tone(523.25, 0.12);
+                setTimeout(() => tone(659.25, 0.12), 110);
+                setTimeout(() => tone(783.99, 0.24), 220);
+                document.getElementById("win-title").textContent = `${(state.turn === "light" ? "LIGHT" : "DARK")} WINS!`;
+                document.getElementById("win-subtitle").textContent =
+                    oppCount === 0
+                        ? "All opponent pieces captured! Great game at Alfred Enterprise (IDA, Kenema)."
+                        : "Opponent has no legal moves left! Great game at Alfred Enterprise (IDA, Kenema).";
+                document.getElementById("win-modal").classList.remove("hidden");
+                return;
+            }
+
+            state.turn = opponent;
+            state.legalMoves = oppMoves;
+            const nextLabel = state.turn === "light" ? "Light" : (state.mode === "ai" ? "Computer" : "Dark");
+            updateHUD(`${nextLabel}'s turn${oppMoves.some(m => m.isJump) ? " — capture required!" : "."}`);
+            drawBoard();
+
+            if (state.mode === "ai" && state.turn === "dark") {
+                aiTimer = setTimeout(runAITurn, 460);
+            }
+        }
+
+        function runAITurn() {
+            if (state.gameOver || state.turn !== "dark") return;
+            if (!state.legalMoves.length) return;
+            const skill = document.getElementById("ai-skill-select").value;
+            let chosen = state.legalMoves[0];
+
+            if (skill === "smart") {
+                let bestScore = -999;
+                for (const m of state.legalMoves) {
+                    let s = m.isJump ? 50 : 0;
+                    if (m.toR === 7) s += 35;
+                    if (m.toC === 0 || m.toC === 7) s += 8;
+                    s += m.toR * 2 + Math.random() * 6;
+                    if (s > bestScore) {
+                        bestScore = s;
+                        chosen = m;
+                    }
+                }
+            } else {
+                chosen = state.legalMoves[Math.floor(Math.random() * state.legalMoves.length)];
+            }
+
+            executeMove(chosen);
+        }
+
+        canvas.addEventListener("pointerdown", (e) => {
+            if (state.gameOver) return;
+            if (state.mode === "ai" && state.turn === "dark") return;
+
+            const rect = canvas.getBoundingClientRect();
+            const size = 560;
+            const pad = 28;
+            const sq = (size - pad * 2) / 8;
+
+            const px = ((e.clientX - rect.left) / rect.width) * size;
+            const py = ((e.clientY - rect.top) / rect.height) * size;
+
+            const c = Math.floor((px - pad) / sq);
+            const r = Math.floor((py - pad) / sq);
+            if (r < 0 || r >= 8 || c < 0 || c >= 8) return;
+
+            // If a move is highlighted for the currently selected piece, execute it
+            if (state.selected) {
+                const targetMove = state.legalMoves.find(
+                    m => m.fromR === state.selected.r && m.fromC === state.selected.c && m.toR === r && m.toC === c
+                );
+                if (targetMove) {
+                    executeMove(targetMove);
+                    return;
+                }
+            }
+
+            // Otherwise select a piece that has legal moves
+            if (state.forcedChainFrom) {
+                state.selected = { r: state.forcedChainFrom.r, c: state.forcedChainFrom.c };
+                drawBoard();
+                return;
+            }
+
+            const piece = state.grid[r][c];
+            if (piece && piece.side === state.turn) {
+                const hasMove = state.legalMoves.some(m => m.fromR === r && m.fromC === c);
+                if (hasMove) {
+                    state.selected = { r, c };
+                    drawBoard();
+                }
+            }
+        });
+
+        function drawBoard() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            const size = 560;
+            if (canvas.width !== size * dpr) {
+                canvas.width = size * dpr;
+                canvas.height = size * dpr;
+            }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            const themeName = document.getElementById("theme-select")?.value || "wood";
+            const th = BOARD_THEMES[themeName] || BOARD_THEMES.wood;
+            const pad = 28;
+            const sq = (size - pad * 2) / 8;
+
+            // Outer wooden/styled frame
+            const grad = ctx.createLinearGradient(0, 0, size, size);
+            grad.addColorStop(0, th.frameLight);
+            grad.addColorStop(1, th.frameDark);
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, 18);
+            ctx.fill();
+
+            // 8x8 Squares
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const x = pad + c * sq;
+                    const y = pad + r * sq;
+                    const isDark = (r + c) % 2 === 1;
+                    ctx.fillStyle = isDark ? th.darkSq : th.lightSq;
+                    ctx.fillRect(x, y, sq, sq);
+                }
+            }
+
+            // Highlight valid destination squares for selected piece
+            if (state.selected && !state.gameOver) {
+                const dests = state.legalMoves.filter(
+                    m => m.fromR === state.selected.r && m.fromC === state.selected.c
+                );
+                for (const d of dests) {
+                    const cx = pad + (d.toC + 0.5) * sq;
+                    const cy = pad + (d.toR + 0.5) * sq;
+                    ctx.fillStyle = d.isJump ? "rgba(250, 204, 21, 0.45)" : "rgba(56, 189, 248, 0.35)";
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, sq * 0.24, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Draw pieces with sculpted rim & king crown
+            const movableSet = new Set(state.legalMoves.map(m => `${m.fromR},${m.fromC}`));
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const piece = state.grid[r][c];
+                    if (!piece) continue;
+                    const cx = pad + (c + 0.5) * sq;
+                    const cy = pad + (r + 0.5) * sq;
+                    const radius = sq * 0.36;
+
+                    const isSelected = state.selected && state.selected.r === r && state.selected.c === c;
+                    const canMoveSide = !(state.mode === "ai" && state.turn === "dark") && piece.side === state.turn && movableSet.has(`${r},${c}`);
+
+                    if (isSelected || canMoveSide) {
+                        ctx.strokeStyle = isSelected ? "#facc15" : "rgba(253, 224, 71, 0.78)";
+                        ctx.lineWidth = isSelected ? 4 : 2.5;
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, radius + 4.5, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+
+                    // Drop shadow
+                    ctx.fillStyle = "rgba(0,0,0,0.38)";
+                    ctx.beginPath();
+                    ctx.arc(cx, cy + 3, radius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Main piece body
+                    ctx.fillStyle = piece.side === "light" ? th.lightPiece : th.darkPiece;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = piece.side === "light" ? th.lightRing : th.darkRing;
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+
+                    // Inner ridge ring
+                    ctx.strokeStyle = piece.side === "light" ? "rgba(180,83,9,0.45)" : "rgba(255,255,255,0.28)";
+                    ctx.lineWidth = 1.8;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius * 0.62, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    if (piece.king) {
+                        ctx.fillStyle = piece.side === "light" ? "#b45309" : "#facc15";
+                        ctx.font = `bold ${Math.round(sq * 0.34)}px sans-serif`;
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+                        ctx.fillText("♛", cx, cy + 1);
+                    }
+                }
+            }
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            startNewGame();
+        });
+    </script>
+</body>
+</html>
