@@ -1,17 +1,14 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alfred Enterprise — 3-Cup Shell Game &amp; AI Vision Tracker</title>
-    <!-- Tailwind CSS for responsive mobile-first styling -->
+    <title>Alfred Enterprise — 3-Cup Shell Game &amp; Kenema Pro Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Warm dark studio, wood/felt table, gold & emerald storefront theme */
         body {
             font-family: 'Inter', sans-serif;
             background: radial-gradient(circle at 50% 0%, #2a1c12 0%, #140f0c 50%, #070504 100%);
@@ -40,10 +37,9 @@
             cursor: not-allowed;
             transform: none;
         }
-        /* Explicit minimum height + aspect ratio so canvas never collapses on mobile */
         #canvas-stage {
             min-height: 290px;
-            height: clamp(290px, 46vh, 410px);
+            height: clamp(290px, 45vh, 405px);
             background-color: #140e0a;
         }
         #shell-canvas {
@@ -93,7 +89,7 @@
                             IDA, Kenema
                         </span>
                     </div>
-                    <p class="text-[11px] text-stone-400">3-Cup Shell Game &amp; AI Vision Tracker</p>
+                    <p class="text-[11px] text-stone-400">3-Cup Shell Game &amp; Kenema Pro Challenge</p>
                 </div>
             </div>
 
@@ -103,20 +99,20 @@
             </a>
         </div>
 
-        <!-- Scoreboard, Streak, Vouchers, Mute & Store Link -->
-        <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+        <!-- Scoreboard, Daily Plays, Vouchers, Mute & Store Link -->
+        <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto flex-wrap">
             <div class="flex items-center gap-2 bg-stone-950/90 border border-stone-800 rounded-xl px-2.5 py-1">
                 <div class="text-center pr-2 border-r border-stone-800">
-                    <span class="block text-[9px] uppercase tracking-wider text-stone-400">Wins</span>
-                    <span id="stat-wins" class="text-xs sm:text-sm font-extrabold text-amber-400 mono">0</span>
+                    <span class="block text-[9px] uppercase tracking-wider text-stone-400">Plays Left</span>
+                    <span id="stat-plays" class="text-xs sm:text-sm font-extrabold text-amber-300 mono">5</span>
                 </div>
                 <div class="text-center pr-2 border-r border-stone-800">
                     <span class="block text-[9px] uppercase tracking-wider text-stone-400">Streak</span>
                     <span id="stat-streak" class="text-xs sm:text-sm font-extrabold text-emerald-400 mono">0</span>
                 </div>
                 <div class="text-center">
-                    <span class="block text-[9px] uppercase tracking-wider text-stone-400">Acc</span>
-                    <span id="stat-acc" class="text-xs sm:text-sm font-extrabold text-stone-200 mono">--%</span>
+                    <span class="block text-[9px] uppercase tracking-wider text-stone-400">Pro Wins</span>
+                    <span id="stat-pro-wins" class="text-xs sm:text-sm font-extrabold text-amber-400 mono">0/3</span>
                 </div>
             </div>
 
@@ -142,13 +138,27 @@
     <!-- Main Container -->
     <main class="w-full max-w-4xl mx-auto my-2.5 flex-1 flex flex-col gap-2.5">
 
-        <!-- Instructions & 3-Win Streak Reward Tracker -->
-        <section class="bg-stone-900/90 border border-amber-500/25 rounded-2xl px-3.5 py-2.5 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs">
-            <div class="text-stone-200 leading-relaxed">
-                <strong class="text-amber-300">How to Play:</strong>
-                Tap <strong class="text-white">Start Round</strong> to see the golden ball under a cup, follow the swaps, then <strong class="text-amber-300">tap a cup</strong> (#1, #2, or #3) to pick!
-                Win <strong class="text-emerald-300">3 in a row</strong> (with <strong class="text-white">AI Demo OFF</strong>) to unlock an <strong class="text-amber-300">NLe Discount Code</strong>.
+        <!-- Mode Selector & Reward Tracker -->
+        <section class="bg-stone-900/90 border border-amber-500/25 rounded-2xl px-3.5 py-2.5 shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 text-xs">
+            <div class="space-y-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-amber-300 font-extrabold">Challenge Mode:</span>
+                    <div class="inline-flex rounded-xl bg-stone-950 p-1 border border-stone-800">
+                        <button id="mode-streak-btn" type="button" onclick="setChallengeMode('streak')"
+                            class="px-2.5 py-1 rounded-lg font-extrabold text-[11px] bg-amber-500 text-stone-950">
+                            3-Win Streak
+                        </button>
+                        <button id="mode-pro-btn" type="button" onclick="setChallengeMode('kenema_pro')"
+                            class="px-2.5 py-1 rounded-lg font-extrabold text-[11px] text-stone-300 hover:text-white">
+                            🏆 Kenema Pro
+                        </button>
+                    </div>
+                </div>
+                <p id="mode-help-text" class="text-stone-300 leading-relaxed">
+                    <strong>3-Win Streak:</strong> Win <strong>3 rounds in a row</strong> (with <strong>AI Demo OFF</strong>) to unlock an <strong>NLe 15</strong> or <strong>NLe 30 + Delivery</strong> code.
+                </p>
             </div>
+
             <div class="flex items-center gap-1.5 shrink-0">
                 <span id="streak-pip-1" class="w-3 h-3 rounded-full bg-stone-800 border border-stone-600"></span>
                 <span id="streak-pip-2" class="w-3 h-3 rounded-full bg-stone-800 border border-stone-600"></span>
@@ -169,9 +179,9 @@
                         <option value="slow">Slow (NLe 15 OFF)</option>
                         <option value="medium">Medium (NLe 15 OFF)</option>
                         <option value="fast">Fast (NLe 30 + Delivery)</option>
-                        <option value="pro">Pro (NLe 30 + Delivery)</option>
-                        <option value="turbo">⚡ Turbo (NLe 30 + Delivery)</option>
-                        <option value="ultraturno" selected>🔥 Ultra Turbo (NLe 30 + Delivery)</option>
+                        <option value="pro">Pro (NLe 30 + Delivery • Pro Eligible)</option>
+                        <option value="turbo">⚡ Turbo (NLe 30 + Delivery • Pro Eligible)</option>
+                        <option value="ultraturbo" selected>🔥 Ultra Turbo (NLe 30 + Delivery • Pro Eligible)</option>
                     </select>
                 </div>
 
@@ -202,7 +212,7 @@
                         </span>
                     </div>
                     <p id="ai-desc" class="text-[11px] text-stone-400 leading-tight">
-                        OFF: Earn streak rewards. ON: Watch live target lock box &amp; motion trail.
+                        OFF: Earn store rewards. ON: Watch live target lock box &amp; motion trail.
                     </p>
                 </div>
 
@@ -222,7 +232,7 @@
             <div class="absolute top-3 inset-x-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
                 <div id="status-readout"
                     class="bg-stone-950/95 border border-amber-400/50 backdrop-blur px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-bold text-amber-300 shadow">
-                    Cups #1, #2, #3 ready! Tap "Start Round" or tap a cup.
+                    5 free plays today! Tap "Start Round" to begin.
                 </div>
 
                 <div id="ai-telemetry-pill"
@@ -247,12 +257,12 @@
             </div>
         </section>
 
-        <!-- Primary Action Row Outside Canvas (Includes Reset / Show Cups) -->
+        <!-- Primary Action Row Outside Canvas -->
         <section class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2.5">
             <button id="start-btn" type="button" onclick="startRound()"
                 class="btn-press flex-1 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-stone-950 font-black text-sm py-3.5 px-5 rounded-2xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
                 <span>🎲</span>
-                <span id="start-btn-label">Start Round</span>
+                <span id="start-btn-label">Start Round (1 Play)</span>
             </button>
 
             <button id="reset-cups-btn" type="button" onclick="resetAndShowCups()"
@@ -261,12 +271,11 @@
                 <span>Reset / Show Cups</span>
             </button>
 
-            <a href="https://wa.me/23276655025?text=Hello%20Alfred%20Enterprise%20(IDA%2C%20Kenema)!%20I%20am%20playing%20your%203-Cup%20Shell%20Game."
-                target="_blank" rel="noopener noreferrer"
+            <button id="bonus-plays-btn" type="button" onclick="claimBonusPlaysOnWhatsApp()"
                 class="btn-press bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-400/40 text-emerald-300 font-bold text-xs sm:text-sm py-3.5 px-4 rounded-2xl flex items-center justify-center gap-1.5">
-                <span>💬</span>
-                <span>WhatsApp +23276655025</span>
-            </a>
+                <span>🎁</span>
+                <span>+3 Bonus Plays (WhatsApp)</span>
+            </button>
         </section>
 
         <!-- Storefront Info Bar -->
@@ -278,10 +287,10 @@
 
     <!-- Footer -->
     <footer class="w-full max-w-4xl mx-auto text-center text-[11px] text-stone-500 pt-1">
-        Alfred Enterprise Storefront Game • Instant Discount Codes for Kenema Orders
+        Alfred Enterprise Storefront Game • Free Daily Plays &amp; Store Discount Vouchers
     </footer>
 
-    <!-- 3-Win Streak Reward Modal -->
+    <!-- Reward Unlocked Modal -->
     <div id="reward-modal" class="hidden fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="modal-pop w-full max-w-md bg-stone-900 border-2 border-amber-400/60 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 relative">
             <button type="button" onclick="closeRewardModal()" aria-label="Close Reward Modal"
@@ -293,7 +302,7 @@
                 <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-emerald-500 flex items-center justify-center text-3xl shadow-lg">
                     🏆
                 </div>
-                <span class="block text-[11px] font-black uppercase tracking-widest text-emerald-400">
+                <span id="reward-modal-kicker" class="block text-[11px] font-black uppercase tracking-widest text-emerald-400">
                     3 Wins in a Row!
                 </span>
                 <h2 class="text-xl sm:text-2xl font-black gold-text">NLe REWARD UNLOCKED</h2>
@@ -330,7 +339,7 @@
         </div>
     </div>
 
-    <!-- Saved Vouchers Drawer / Modal -->
+    <!-- Saved Vouchers Modal -->
     <div id="vouchers-modal" class="hidden fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="modal-pop w-full max-w-md bg-stone-900 border border-stone-700 rounded-3xl p-5 shadow-2xl space-y-3.5 relative max-h-[82vh] flex flex-col">
             <div class="flex items-center justify-between border-b border-stone-800 pb-3">
@@ -354,13 +363,8 @@
     </div>
 
     <script>
-        /**
-         * Alfred Enterprise — 3-Cup Shell Game & AI Vision Tracker
-         * Standalone 60fps HTML5 Canvas + Web Audio + LocalStorage Rewards
-         */
-
         // =====================================================================
-        // 1. WEB AUDIO SYNTHESIZER (Throttled for Rapid Swaps)
+        // 1. WEB AUDIO SYNTHESIZER
         // =====================================================================
         let audioCtx = null;
         let muted = false;
@@ -394,9 +398,7 @@
                 gain.connect(audioCtx.destination);
                 osc.start();
                 osc.stop(audioCtx.currentTime + dur);
-            } catch (e) {
-                // Ignore audio errors on restricted browsers
-            }
+            } catch (e) {}
         }
 
         function triggerSFX(effect) {
@@ -438,11 +440,53 @@
         }
 
         // =====================================================================
-        // 2. VOUCHER STORAGE & WHATSAPP REWARD FLOW
+        // 2. DAILY FREE PLAYS, BONUS PLAYS & VOUCHER STORAGE
         // =====================================================================
+        const DAILY_PLAYS_KEY = "alfred_shell_daily_plays_v1";
         const VOUCHER_KEY = "alfred_shell_vouchers_v3";
         const WA_NUMBER = "23276655025";
+        const DAILY_FREE_ALLOWANCE = 5;
         let currentPromoCode = "";
+
+        function getTodayKey() {
+            return new Date().toISOString().slice(0, 10);
+        }
+
+        function loadDailyPlays() {
+            const today = getTodayKey();
+            try {
+                const raw = localStorage.getItem(DAILY_PLAYS_KEY);
+                const parsed = raw ? JSON.parse(raw) : null;
+                if (parsed && parsed.date === today && typeof parsed.playsLeft === "number") {
+                    return { date: today, playsLeft: Math.max(0, parsed.playsLeft), bonusClaimedToday: Boolean(parsed.bonusClaimedToday) };
+                }
+            } catch (e) {}
+            const fresh = { date: today, playsLeft: DAILY_FREE_ALLOWANCE, bonusClaimedToday: false };
+            saveDailyPlays(fresh);
+            return fresh;
+        }
+
+        function saveDailyPlays(state) {
+            try {
+                localStorage.setItem(DAILY_PLAYS_KEY, JSON.stringify(state));
+            } catch (e) {}
+        }
+
+        function claimBonusPlaysOnWhatsApp() {
+            const state = loadDailyPlays();
+            if (!state.bonusClaimedToday) {
+                state.playsLeft += 3;
+                state.bonusClaimedToday = true;
+                saveDailyPlays(state);
+                updateBadges();
+                updateStatusBanner("🎁 +3 Bonus Plays unlocked! Enjoy your extra rounds at Alfred Enterprise.", "emerald");
+                playTone(700, 0.09, "triangle", 0.12, 960);
+            }
+            const msg = encodeURIComponent(
+                "Hello Alfred Enterprise (IDA, Kenema)! 🎁 I just claimed +3 Bonus Plays on your 3-Cup Shell Game and want to check store deals."
+            );
+            window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, "_blank", "noopener,noreferrer");
+        }
 
         function getSavedVouchers() {
             try {
@@ -458,9 +502,7 @@
                 const all = getSavedVouchers();
                 all.unshift(v);
                 localStorage.setItem(VOUCHER_KEY, JSON.stringify(all.slice(0, 20)));
-            } catch (e) {
-                // Ignore storage errors
-            }
+            } catch (e) {}
             updateVoucherBadge();
         }
 
@@ -468,10 +510,20 @@
             document.getElementById("voucher-count").textContent = String(getSavedVouchers().length);
         }
 
-        function getTierPrize(speed) {
-            if (speed === "fast" || speed === "pro" || speed === "turbo" || speed === "ultraturno") {
-                const labels = { ultraturno: "Ultra Turbo", turbo: "Turbo", pro: "Pro", fast: "Fast" };
+        function getTierPrize(speed, mode) {
+            if (mode === "kenema_pro") {
                 return {
+                    kicker: "Kenema Pro Challenge Complete!",
+                    tierName: "Kenema Pro",
+                    headline: "NLe 30 OFF + Free IDA/Kenema Delivery (Pro Tier)",
+                    shortLabel: "Pro: NLe 30 + Del",
+                    badgeLabel: "KENEMA PRO: NLe 30 + FREE DELIVERY"
+                };
+            }
+            if (speed === "fast" || speed === "pro" || speed === "turbo" || speed === "ultraturbo") {
+                const labels = { ultraturbo: "Ultra Turbo", turbo: "Turbo", pro: "Pro", fast: "Fast" };
+                return {
+                    kicker: "3 Wins in a Row!",
                     tierName: labels[speed] || "Fast",
                     headline: "NLe 30 OFF + Free IDA/Kenema Delivery",
                     shortLabel: "NLe 30 + Del",
@@ -479,6 +531,7 @@
                 };
             }
             return {
+                kicker: "3 Wins in a Row!",
                 tierName: speed === "medium" ? "Medium" : "Slow",
                 headline: "NLe 15 OFF Your Next Order",
                 shortLabel: "NLe 15 OFF",
@@ -486,27 +539,27 @@
             };
         }
 
-        function generateCode() {
+        function generateCode(mode) {
             const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
             let out = "";
             for (let i = 0; i < 4; i++) {
                 out += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            return `AE-KENEMA-${out}`;
+            return mode === "kenema_pro" ? `AE-PRO-${out}` : `AE-KENEMA-${out}`;
         }
 
         function buildWhatsAppLink(v) {
             const msg =
                 `Hello Alfred Enterprise (IDA, Kenema)! 🏆\n` +
-                `I won a 3-Win Streak on your 3-Cup Shell Game (${v.tierName})!\n` +
+                `I unlocked a reward on your 3-Cup Shell Game (${v.tierName})!\n` +
                 `Promo Code: ${v.code}\n` +
                 `Reward: ${v.headline} (orders over NLe 150).`;
             return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
         }
 
         function openRewardModal() {
-            const prize = getTierPrize(app.speed);
-            const code = generateCode();
+            const prize = getTierPrize(app.speed, app.challengeMode);
+            const code = generateCode(app.challengeMode);
             currentPromoCode = code;
 
             const voucher = {
@@ -517,6 +570,7 @@
             };
             saveVoucher(voucher);
 
+            document.getElementById("reward-modal-kicker").textContent = prize.kicker;
             document.getElementById("reward-modal-headline").textContent = voucher.headline;
             document.getElementById("reward-modal-code").textContent = voucher.code;
             document.getElementById("reward-whatsapp-link").href = buildWhatsAppLink(voucher);
@@ -539,9 +593,7 @@
             area.select();
             try {
                 document.execCommand("copy");
-            } catch (e) {
-                // Ignore fallback failure
-            }
+            } catch (e) {}
             document.body.removeChild(area);
         }
 
@@ -561,7 +613,7 @@
                     <div class="text-center py-8 px-3 space-y-1.5">
                         <div class="text-3xl">🎟️</div>
                         <p class="text-sm font-bold text-stone-200">No Vouchers Unlocked Yet</p>
-                        <p class="text-xs text-stone-400">Win 3 rounds in a row with <strong>AI Demo OFF</strong> to unlock an NLe discount code.</p>
+                        <p class="text-xs text-stone-400">Win 3 in a row or complete 3 Kenema Pro wins (with <strong>AI Demo OFF</strong>) to unlock an NLe discount code.</p>
                     </div>
                 `;
             } else {
@@ -593,21 +645,21 @@
         }
 
         // =====================================================================
-        // 3. STATE MACHINE, SPEED PRESETS & GUARANTEED CANVAS GEOMETRY
+        // 3. STATE MACHINE, SPEED PRESETS & CANVAS GEOMETRY
         // =====================================================================
-        // Phases: IDLE | PEEKING | SHUFFLING | PICKING | REVEALING
         const SPEEDS = {
             slow:       { minMs: 540, maxMs: 620, pauseMs: 110, arc: 1.0,  ease: "cubic", peekUp: 270, peekHold: 500, peekDown: 230 },
             medium:     { minMs: 360, maxMs: 430, pauseMs: 70,  arc: 1.0,  ease: "cubic", peekUp: 240, peekHold: 440, peekDown: 200 },
             fast:       { minMs: 220, maxMs: 280, pauseMs: 35,  arc: 0.9,  ease: "cubic", peekUp: 200, peekHold: 350, peekDown: 170 },
             pro:        { minMs: 150, maxMs: 190, pauseMs: 16,  arc: 0.78, ease: "snap",  peekUp: 175, peekHold: 290, peekDown: 140 },
             turbo:      { minMs: 92,  maxMs: 140, pauseMs: 5,   arc: 0.62, ease: "turbo", peekUp: 150, peekHold: 230, peekDown: 115 },
-            ultraturno: { minMs: 62,  maxMs: 100, pauseMs: 2,   arc: 0.52, ease: "ultra", peekUp: 130, peekHold: 190, peekDown: 100 }
+            ultraturbo: { minMs: 62,  maxMs: 100, pauseMs: 2,   arc: 0.52, ease: "ultra", peekUp: 130, peekHold: 190, peekDown: 100 }
         };
 
         const app = {
             phase: "IDLE",
-            speed: "ultraturno",
+            challengeMode: "streak", // "streak" | "kenema_pro"
+            speed: "ultraturbo",
             totalSwaps: 24,
             swapsDone: 0,
             ballCupId: 1,
@@ -616,6 +668,7 @@
             wins: 0,
             rounds: 0,
             streak: 0,
+            proWins: 0,
             cups: [
                 { id: 0, slot: 0, x: 0, y: 0, lift: 0, scale: 1, hover: false },
                 { id: 1, slot: 1, x: 0, y: 0, lift: 0, scale: 1, hover: false },
@@ -625,7 +678,7 @@
             activeSwap: null,
             lastPair: null,
             queuedFakes: [],
-            peekStep: "UP", // UP | HOLD | DOWN
+            peekStep: "UP",
             phaseMs: 0,
             trail: [],
             confetti: [],
@@ -636,7 +689,6 @@
         const ctx = canvas.getContext("2d");
         const stageContainer = document.getElementById("canvas-stage");
 
-        // Safe non-zero logical dimensions initialized before first paint
         let stageW = 720;
         let stageH = 340;
 
@@ -672,7 +724,7 @@
         function syncCanvasSize() {
             const rect = stageContainer.getBoundingClientRect();
             const fallbackW = Math.max(300, (window.innerWidth || 360) - 24);
-            const fallbackH = Math.max(290, Math.min(410, Math.round((window.innerHeight || 640) * 0.46)));
+            const fallbackH = Math.max(290, Math.min(405, Math.round((window.innerHeight || 640) * 0.45)));
 
             stageW = rect.width >= 240 ? Math.round(rect.width) : fallbackW;
             stageH = rect.height >= 240 ? Math.round(rect.height) : fallbackH;
@@ -696,7 +748,7 @@
         window.addEventListener("resize", syncCanvasSize);
 
         // =====================================================================
-        // 4. HUD, STATUS & SETTINGS CONTROLS
+        // 4. HUD, CHALLENGE MODE & SETTINGS CONTROLS
         // =====================================================================
         function updateStatusBanner(text, tone) {
             const el = document.getElementById("status-readout");
@@ -709,29 +761,60 @@
             el.className = cls;
         }
 
-        function updateBadges() {
-            document.getElementById("stat-wins").textContent = String(app.wins);
-            document.getElementById("stat-streak").textContent = String(app.streak);
-            const acc = app.rounds > 0 ? Math.round((app.wins / app.rounds) * 100) + "%" : "--%";
-            document.getElementById("stat-acc").textContent = acc;
+        function setChallengeMode(mode) {
+            app.challengeMode = mode;
+            const streakBtn = document.getElementById("mode-streak-btn");
+            const proBtn = document.getElementById("mode-pro-btn");
+            const helpEl = document.getElementById("mode-help-text");
 
+            if (mode === "kenema_pro") {
+                proBtn.className = "px-2.5 py-1 rounded-lg font-extrabold text-[11px] bg-amber-500 text-stone-950";
+                streakBtn.className = "px-2.5 py-1 rounded-lg font-extrabold text-[11px] text-stone-300 hover:text-white";
+                helpEl.innerHTML =
+                    "<strong>Kenema Pro Challenge:</strong> Win <strong>3 rounds</strong> on <strong>Pro, Turbo, or Ultra Turbo</strong> (with <strong>AI Demo OFF</strong>) to unlock a <strong>Pro</strong> discount code.";
+                if (app.speed === "slow" || app.speed === "medium" || app.speed === "fast") {
+                    document.getElementById("speed-select").value = "ultraturbo";
+                    syncSettings();
+                }
+            } else {
+                streakBtn.className = "px-2.5 py-1 rounded-lg font-extrabold text-[11px] bg-amber-500 text-stone-950";
+                proBtn.className = "px-2.5 py-1 rounded-lg font-extrabold text-[11px] text-stone-300 hover:text-white";
+                helpEl.innerHTML =
+                    "<strong>3-Win Streak:</strong> Win <strong>3 rounds in a row</strong> (with <strong>AI Demo OFF</strong>) to unlock an <strong>NLe 15</strong> or <strong>NLe 30 + Delivery</strong> code.";
+            }
+            updateBadges();
+        }
+
+        function updateBadges() {
+            const playsState = loadDailyPlays();
+            document.getElementById("stat-plays").textContent = String(playsState.playsLeft);
+            document.getElementById("stat-streak").textContent = String(app.streak);
+            document.getElementById("stat-pro-wins").textContent = `${app.proWins}/3`;
+
+            const activeCount = app.challengeMode === "kenema_pro" ? app.proWins : app.streak;
             for (let i = 1; i <= 3; i++) {
                 const pip = document.getElementById(`streak-pip-${i}`);
                 if (!pip) continue;
-                if (i <= app.streak) {
+                if (i <= activeCount) {
                     pip.className = "w-3 h-3 rounded-full bg-gradient-to-tr from-amber-400 to-emerald-400 shadow";
                 } else {
                     pip.className = "w-3 h-3 rounded-full bg-stone-800 border border-stone-600";
                 }
             }
 
-            const prize = getTierPrize(app.speed);
-            document.getElementById("streak-reward-label").textContent = `${app.streak}/3 • ${prize.shortLabel}`;
+            const prize = getTierPrize(app.speed, app.challengeMode);
+            document.getElementById("streak-reward-label").textContent = `${activeCount}/3 • ${prize.shortLabel}`;
             document.getElementById("prize-status-badge").textContent = app.aiDemo
                 ? "AI DEMO: REWARDS PAUSED"
                 : prize.badgeLabel;
             document.getElementById("swap-status-badge").textContent =
                 `PHASE: ${app.phase} • SWAPS: ${app.swapsDone} / ${app.totalSwaps}`;
+
+            if (app.phase === "IDLE" || app.phase === "REVEALING") {
+                document.getElementById("start-btn-label").textContent = playsState.playsLeft > 0
+                    ? `Start Round (${playsState.playsLeft} left)`
+                    : "No Plays Left • Tap +3 Bonus";
+            }
         }
 
         function syncSettings() {
@@ -740,7 +823,7 @@
             const prevSpeed = app.speed;
             app.speed = speedEl.value;
 
-            if (app.speed === "ultraturno" && prevSpeed !== "ultraturno") {
+            if (app.speed === "ultraturbo" && prevSpeed !== "ultraturbo") {
                 const cur = parseInt(swapsEl.value, 10) || 24;
                 if (cur < 20) swapsEl.value = "24";
             } else if (app.speed === "turbo" && prevSpeed !== "turbo") {
@@ -768,7 +851,7 @@
                 dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-ping";
                 badge.textContent = "Rewards Paused";
                 badge.className = "text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40";
-                desc.textContent = "Target lock box & motion trail ON. Turn OFF to build 3-win streak rewards.";
+                desc.textContent = "Target lock box & motion trail ON. Turn OFF to earn store rewards.";
                 pill.classList.remove("hidden");
                 scanlines.classList.remove("hidden");
                 triggerSFX("lock");
@@ -779,7 +862,7 @@
                 dot.className = "w-2 h-2 rounded-full bg-stone-500";
                 badge.textContent = "Rewards ON";
                 badge.className = "text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/35";
-                desc.textContent = "OFF: Earn streak rewards. ON: Watch live target lock box & motion trail.";
+                desc.textContent = "OFF: Earn store rewards. ON: Watch live target lock box & motion trail.";
                 pill.classList.add("hidden");
                 scanlines.classList.add("hidden");
                 playTone(340, 0.07, "sine", 0.08);
@@ -815,24 +898,32 @@
             alignBallWithHostCup();
 
             document.getElementById("start-btn").disabled = false;
-            document.getElementById("start-btn-label").textContent = "Start Round";
-            updateStatusBanner("Cups #1, #2, #3 reset & visible! Tap Start Round.", "amber");
+            updateStatusBanner("All 3 cups reset & visible! Tap Start Round.", "amber");
             updateBadges();
             playTone(460, 0.08, "triangle", 0.08, 620);
         }
 
         // =====================================================================
-        // 5. GAMEPLAY & MULTI-PATTERN SWAP ENGINE
+        // 5. GAMEPLAY & SWAP ENGINE
         // =====================================================================
         function startRound() {
             if (app.phase === "PEEKING" || app.phase === "SHUFFLING") return;
+            const playsState = loadDailyPlays();
+            if (playsState.playsLeft <= 0) {
+                updateStatusBanner("No free plays left today! Tap '+3 Bonus Plays (WhatsApp)' for extra plays.", "red");
+                updateBadges();
+                return;
+            }
+
             ensureAudio();
             syncCanvasSize();
             syncSettings();
 
-            if (app.streak >= 3) {
-                app.streak = 0;
-            }
+            playsState.playsLeft -= 1;
+            saveDailyPlays(playsState);
+
+            if (app.streak >= 3) app.streak = 0;
+            if (app.proWins >= 3) app.proWins = 0;
 
             app.ballCupId = Math.floor(Math.random() * 3);
             app.pickedCupId = null;
@@ -884,7 +975,7 @@
             app.lastPair = [sA, sB];
 
             const leftSwaps = app.totalSwaps - app.swapsDone;
-            const fakeChance = app.speed === "ultraturno" ? 0.36 : app.speed === "turbo" ? 0.26 : app.speed === "pro" ? 0.18 : 0;
+            const fakeChance = app.speed === "ultraturbo" ? 0.36 : app.speed === "turbo" ? 0.26 : app.speed === "pro" ? 0.18 : 0;
             if (leftSwaps >= 2 && Math.random() < fakeChance) {
                 app.queuedFakes.push([sB, sA]);
             }
@@ -894,7 +985,7 @@
         function chooseSwapPattern(isFake) {
             if (isFake) return "straight";
             const r = Math.random();
-            if (app.speed === "ultraturno" || app.speed === "turbo") {
+            if (app.speed === "ultraturbo" || app.speed === "turbo") {
                 if (r < 0.34) return "straight";
                 if (r < 0.72) return "ellipse";
                 return "figure8";
@@ -910,11 +1001,10 @@
                 app.activeSwap = null;
                 app.queuedFakes = [];
                 document.getElementById("start-btn").disabled = false;
-                document.getElementById("start-btn-label").textContent = "Shuffle Again";
                 updateStatusBanner(
                     app.aiDemo
                         ? "AI locked onto the target cup! Tap it to reveal."
-                        : "Cups stopped! Tap the cup hiding the golden ball.",
+                        : "Cups stopped! Tap a cup to find the golden ball.",
                     app.aiDemo ? "emerald" : "amber"
                 );
                 updateBadges();
@@ -933,7 +1023,7 @@
             cupA.slot = sB;
             cupB.slot = sA;
 
-            const cfg = SPEEDS[app.speed] || SPEEDS.ultraturno;
+            const cfg = SPEEDS[app.speed] || SPEEDS.ultraturbo;
             const dur = cfg.minMs + Math.random() * (cfg.maxMs - cfg.minMs);
             const sign = Math.random() < 0.5 ? 1 : -1;
             const arcAmp = Math.min(58, stageH * 0.16) * cfg.arc;
@@ -956,7 +1046,7 @@
                 pausing: false
             };
 
-            const fastSound = app.speed === "ultraturno" || app.speed === "turbo";
+            const fastSound = app.speed === "ultraturbo" || app.speed === "turbo";
             triggerSFX(fastSound ? "turbo" : "swap");
         }
 
@@ -990,16 +1080,31 @@
 
             app.rounds += 1;
             const won = cup.id === app.ballCupId;
+            const proSpeed = app.speed === "pro" || app.speed === "turbo" || app.speed === "ultraturbo";
 
             document.getElementById("start-btn").disabled = false;
-            document.getElementById("start-btn-label").textContent = "Play Again";
 
             if (won) {
                 app.wins += 1;
                 spawnConfetti(cup.x, cup.y - 35);
                 if (app.aiDemo) {
-                    updateStatusBanner("🎯 Target Found! Turn AI Demo OFF to count wins toward rewards.", "emerald");
+                    updateStatusBanner("🎯 Target Found! Turn AI Demo OFF to earn store rewards.", "emerald");
                     triggerSFX("win");
+                } else if (app.challengeMode === "kenema_pro") {
+                    if (proSpeed) {
+                        app.proWins += 1;
+                        if (app.proWins >= 3) {
+                            updateStatusBanner("🏆 KENEMA PRO UNLOCKED! Your Pro promo code is ready!", "emerald");
+                            setTimeout(() => openRewardModal(), 400);
+                        } else {
+                            const rem = 3 - app.proWins;
+                            updateStatusBanner(`🏆 Pro Win! ${rem} more Pro-speed win${rem > 1 ? "s" : ""} to unlock reward!`, "emerald");
+                            triggerSFX("win");
+                        }
+                    } else {
+                        updateStatusBanner("🎯 Nice pick! Switch speed to Pro, Turbo, or Ultra Turbo for Kenema Pro wins.", "amber");
+                        triggerSFX("win");
+                    }
                 } else {
                     app.streak += 1;
                     if (app.streak >= 3) {
@@ -1012,7 +1117,7 @@
                     }
                 }
             } else {
-                if (!app.aiDemo) app.streak = 0;
+                if (!app.aiDemo && app.challengeMode === "streak") app.streak = 0;
                 updateStatusBanner("❌ Missed! Golden ball was under the highlighted cup.", "red");
                 triggerSFX("lose");
             }
@@ -1057,7 +1162,7 @@
                 if (hit) {
                     pickCup(hit);
                 } else {
-                    updateStatusBanner("Tap directly on Cup #1, #2, or #3 to pick!", "amber");
+                    updateStatusBanner("Tap directly on one of the cups to pick!", "amber");
                 }
             } else if (app.phase === "IDLE" || app.phase === "REVEALING") {
                 startRound();
@@ -1116,7 +1221,7 @@
         function updateGame(dt) {
             const { cupH } = computeStageMetrics();
             const maxLift = cupH * 0.65;
-            const cfg = SPEEDS[app.speed] || SPEEDS.ultraturno;
+            const cfg = SPEEDS[app.speed] || SPEEDS.ultraturbo;
             app.ball.glow += dt * 0.005;
 
             if (app.phase === "PEEKING") {
@@ -1142,13 +1247,13 @@
                         if (host) host.lift = 0;
                         app.ball.visible = false;
                         app.phase = "SHUFFLING";
-                        const blitz = app.speed === "ultraturno" || app.speed === "turbo";
+                        const blitz = app.speed === "ultraturbo" || app.speed === "turbo";
                         if (blitz) {
                             pulseTurboFlash();
                             triggerSFX("turbo");
                         }
                         updateStatusBanner(
-                            app.speed === "ultraturno"
+                            app.speed === "ultraturbo"
                                 ? "🔥 ULTRA TURBO! High-speed swaps underway!"
                                 : (app.speed === "turbo"
                                     ? "⚡ TURBO SHUFFLE! Track the cup fast!"
@@ -1217,7 +1322,6 @@
                 });
             }
 
-            // Update AI motion trail & readout
             const target = app.cups.find(c => c.id === app.ballCupId);
             if (target && app.aiDemo) {
                 const tx = Math.round(target.x);
@@ -1230,11 +1334,10 @@
                     app.trail = app.trail.filter(pt => pt.alpha > 0);
                 }
                 document.getElementById("ai-lock-readout").textContent =
-                    app.phase === "IDLE" ? "LOCK: STANDBY" : "TARGET #01 LOCKED";
+                    app.phase === "IDLE" ? "LOCK: STANDBY" : "TARGET LOCKED";
                 document.getElementById("ai-coord-readout").textContent = `X:${tx} Y:${ty}`;
             }
 
-            // Update confetti particles
             const sec = dt / 1000;
             app.confetti.forEach(p => {
                 p.x += p.vx * sec;
@@ -1249,26 +1352,23 @@
         }
 
         // =====================================================================
-        // 8. CANVAS RENDERER (STUDIO, WOOD/FELT TABLE, 3D CUPS, BALL & HUD)
+        // 8. CANVAS RENDERER
         // =====================================================================
         function renderBackgroundAndTable() {
             const { w, h, horizonY } = computeStageMetrics();
 
-            // Warm dark studio backdrop
             const studioGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
             studioGrad.addColorStop(0, "#23170f");
             studioGrad.addColorStop(1, "#0d0806");
             ctx.fillStyle = studioGrad;
             ctx.fillRect(0, 0, w, horizonY);
 
-            // Overhead warm spotlight
             const spot = ctx.createRadialGradient(w * 0.5, 16, 12, w * 0.5, horizonY * 0.75, w * 0.58);
             spot.addColorStop(0, "rgba(251, 191, 36, 0.16)");
             spot.addColorStop(1, "rgba(251, 191, 36, 0)");
             ctx.fillStyle = spot;
             ctx.fillRect(0, 0, w, horizonY);
 
-            // Walnut wood border + rich emerald felt tabletop
             const tableGrad = ctx.createLinearGradient(0, horizonY, 0, h);
             tableGrad.addColorStop(0, "#451a03");
             tableGrad.addColorStop(0.18, "#78350f");
@@ -1277,7 +1377,6 @@
             ctx.fillStyle = tableGrad;
             ctx.fillRect(0, horizonY, w, h - horizonY);
 
-            // Gold trim along table edge
             ctx.strokeStyle = "#f59e0b";
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -1285,7 +1384,6 @@
             ctx.lineTo(w, horizonY);
             ctx.stroke();
 
-            // Subtle slot rings on felt
             for (let s = 0; s < 3; s++) {
                 const pt = getSlotPoint(s);
                 ctx.save();
@@ -1307,13 +1405,11 @@
 
             ctx.save();
 
-            // Ground shadow
             ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
             ctx.beginPath();
             ctx.ellipse(bx, app.ball.y + 3, ballR * 0.95, ballR * 0.28, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Warm golden aura
             const aura = ctx.createRadialGradient(bx, by, ballR * 0.15, bx, by, ballR * 2.2 * glowScale);
             aura.addColorStop(0, "rgba(251, 191, 36, 0.65)");
             aura.addColorStop(1, "rgba(251, 191, 36, 0)");
@@ -1322,7 +1418,6 @@
             ctx.arc(bx, by, ballR * 2.2 * glowScale, 0, Math.PI * 2);
             ctx.fill();
 
-            // 3D golden sphere with specular highlight
             const sphere = ctx.createRadialGradient(
                 bx - ballR * 0.35,
                 by - ballR * 0.35,
@@ -1354,7 +1449,6 @@
 
             ctx.save();
 
-            // Drop shadow on felt surface
             const liftNorm = Math.min(1, cup.lift / (cupH * 0.7));
             const shScale = 1 - liftNorm * 0.24;
             ctx.fillStyle = `rgba(0, 0, 0, ${0.58 - liftNorm * 0.22})`;
@@ -1362,7 +1456,6 @@
             ctx.ellipse(cx, cup.y + 5, (wBot * 0.56) * shScale, 10 * shScale, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Tapered cup silhouette
             ctx.beginPath();
             ctx.moveTo(cx - wTop * 0.5, topY);
             ctx.lineTo(cx + wTop * 0.5, topY);
@@ -1370,30 +1463,20 @@
             ctx.quadraticCurveTo(cx, baseY + 11 * cup.scale, cx - wBot * 0.5, baseY);
             ctx.closePath();
 
-            // 3D shaded gradient + specular highlight band
             const bodyGrad = ctx.createLinearGradient(cx - wBot * 0.5, topY, cx + wBot * 0.5, topY);
-            if (cup.hover && app.phase === "PICKING") {
-                bodyGrad.addColorStop(0, "#78350f");
-                bodyGrad.addColorStop(0.32, "#fbbf24");
-                bodyGrad.addColorStop(0.68, "#d97706");
-                bodyGrad.addColorStop(1, "#451a03");
-            } else {
-                bodyGrad.addColorStop(0, "#450a0a");
-                bodyGrad.addColorStop(0.28, "#dc2626");
-                bodyGrad.addColorStop(0.54, "#f87171");
-                bodyGrad.addColorStop(0.84, "#7f1d1d");
-                bodyGrad.addColorStop(1, "#2a0404");
-            }
+            bodyGrad.addColorStop(0, "#450a0a");
+            bodyGrad.addColorStop(0.28, "#dc2626");
+            bodyGrad.addColorStop(0.54, "#f87171");
+            bodyGrad.addColorStop(0.84, "#7f1d1d");
+            bodyGrad.addColorStop(1, "#2a0404");
             ctx.fillStyle = bodyGrad;
             ctx.fill();
 
-            // Vertical specular highlight streak
             ctx.fillStyle = "rgba(255, 255, 255, 0.16)";
             ctx.beginPath();
             ctx.roundRect(cx - wTop * 0.24, topY + 6, Math.max(4, wTop * 0.14), Math.max(12, h - 14), 6);
             ctx.fill();
 
-            // Gold top rim & base rim
             ctx.strokeStyle = "#fbbf24";
             ctx.lineWidth = 2.4 * cup.scale;
             ctx.beginPath();
@@ -1407,7 +1490,6 @@
             ctx.quadraticCurveTo(cx, baseY + 11 * cup.scale, cx + wBot * 0.5, baseY);
             ctx.stroke();
 
-            // Top cap dome
             ctx.fillStyle = "#991b1b";
             ctx.beginPath();
             ctx.ellipse(cx, topY, wTop * 0.5, 6.5 * cup.scale, 0, 0, Math.PI * 2);
@@ -1415,13 +1497,6 @@
             ctx.strokeStyle = "#fde68a";
             ctx.lineWidth = 1.3;
             ctx.stroke();
-
-            // Cup number (#1, #2, #3)
-            ctx.fillStyle = "#fef9c3";
-            ctx.font = `800 ${Math.max(11, Math.round(13 * cup.scale))}px 'JetBrains Mono', monospace`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(`#${cup.id + 1}`, cx, topY + h * 0.56);
 
             ctx.restore();
         }
@@ -1443,7 +1518,6 @@
 
             ctx.save();
 
-            // Motion trail
             if (app.trail.length > 1) {
                 for (let i = 1; i < app.trail.length; i++) {
                     const prev = app.trail[i - 1];
@@ -1458,7 +1532,6 @@
                 }
             }
 
-            // Bounding box
             ctx.fillStyle = "rgba(16, 185, 129, 0.08)";
             ctx.fillRect(left, top, boxW, boxH);
             ctx.strokeStyle = "rgba(16, 185, 129, 0.4)";
@@ -1467,7 +1540,6 @@
             ctx.strokeRect(left, top, boxW, boxH);
             ctx.setLineDash([]);
 
-            // Corner brackets
             const len = 13;
             ctx.strokeStyle = "#10b981";
             ctx.lineWidth = 2.8;
@@ -1478,7 +1550,6 @@
             ctx.moveTo(left + boxW - len, top + boxH); ctx.lineTo(left + boxW, top + boxH); ctx.lineTo(left + boxW, top + boxH - len);
             ctx.stroke();
 
-            // Centroid crosshair
             ctx.fillStyle = "#34d399";
             ctx.beginPath();
             ctx.arc(cx, cy, 3.8, 0, Math.PI * 2);
@@ -1490,8 +1561,7 @@
             ctx.moveTo(cx, cy - 9); ctx.lineTo(cx, cy + 9);
             ctx.stroke();
 
-            // Target lock badge
-            const tag = "ID:01 BALL";
+            const tag = "TARGET BALL";
             ctx.font = "700 10px 'JetBrains Mono', monospace";
             const tw = ctx.measureText(tag).width + 10;
             const th = 17;
@@ -1546,6 +1616,7 @@
         }
 
         function bootApp() {
+            loadDailyPlays();
             syncCanvasSize();
             syncSettings();
             updateBadges();
@@ -1564,4 +1635,3 @@
     </script>
 </body>
 </html>
-```
