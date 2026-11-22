@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alfred Enterprise — Ludo Arena (1–5 Players)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 50% 0%, #2a1c12 0%, #140f0c 55%, #070504 100%);
+            color: #fafaf9;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .gold-text {
+            background: linear-gradient(90deg, #fef08a, #f59e0b, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .btn-press { transition: transform 0.1s ease, filter 0.15s ease; }
+        .btn-press:active { transform: translateY(2px); }
+        .btn-press:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+        #board-wrap {
+            width: 100%;
+            max-width: 470px;
+            aspect-ratio: 1 / 1;
+            margin: 0 auto;
+        }
+        #ludo-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: manipulation;
+        }
+        @keyframes diceShake {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-14deg) scale(1.08); }
+            50% { transform: rotate(14deg) scale(1.08); }
+            75% { transform: rotate(-8deg) scale(1.04); }
+        }
+        .dice-rolling { animation: diceShake 0.35s ease-in-out infinite; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-2.5 sm:p-4">
+
+    <!-- Header -->
+    <header class="w-full max-w-4xl mx-auto bg-stone-900/95 border border-amber-500/30 rounded-2xl px-3.5 py-2.5 shadow-2xl backdrop-blur flex flex-col sm:flex-row items-center justify-between gap-2.5">
+        <div class="flex items-center justify-between w-full sm:w-auto gap-3">
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-emerald-600 flex items-center justify-center text-stone-950 font-black text-base shadow-lg">
+                    AE
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-sm sm:text-base font-black tracking-tight gold-text">ALFRED ENTERPRISE</h1>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                            IDA, Kenema
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-stone-400">Ludo Arena • 1–5 Players &amp; 2-Player Connected</p>
+                </div>
+            </div>
+
+            <a href="./index.html"
+                class="sm:hidden btn-press bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-bold px-2.5 py-1.5 rounded-xl">
+                Store ↗
+            </a>
+        </div>
+
+        <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+            <button id="vouchers-btn" type="button" onclick="openVouchersModal()"
+                class="btn-press bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/40 text-amber-300 text-xs font-extrabold px-2.5 py-2 rounded-xl flex items-center gap-1">
+                <span>🎟️</span>
+                <span id="voucher-count" class="mono">0</span>
+            </button>
+
+            <button id="mute-btn" type="button" onclick="toggleMute()" aria-label="Toggle Sound"
+                class="btn-press bg-stone-800 hover:bg-stone-700 border border-stone-700 text-stone-200 px-2.5 py-2 rounded-xl text-xs font-bold">
+                🔊
+            </button>
+
+            <a href="./index.html"
+                class="hidden sm:inline-flex btn-press bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs font-black px-3 py-2 rounded-xl shadow items-center gap-1">
+                <span>Store</span>
+                <span>↗</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="w-full max-w-4xl mx-auto my-2.5 flex-1 flex flex-col gap-2.5">
+
+        <!-- Match Setup Bar -->
+        <section class="bg-stone-900/90 border border-amber-500/25 rounded-2xl p-3 shadow-lg grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end">
+            <div>
+                <label for="player-count-select" class="block text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-1">
+                    Players (1 to 5)
+                </label>
+                <select id="player-count-select" onchange="onSetupChanged()"
+                    class="w-full bg-stone-950 border border-stone-700 focus:border-amber-400 rounded-xl px-2.5 py-2 text-xs font-bold text-amber-300 outline-none">
+                    <option value="1">1 Player (Solo vs AI)</option>
+                    <option value="2" selected>2 Players (Connected / AI)</option>
+                    <option value="3">3 Players</option>
+                    <option value="4">4 Players (Classic)</option>
+                    <option value="5">5 Players (5-Star Board)</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="match-mode-select" class="block text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-1">
+                    Game Mode
+                </label>
+                <select id="match-mode-select" onchange="onSetupChanged()"
+                    class="w-full bg-stone-950 border border-stone-700 focus:border-amber-400 rounded-xl px-2.5 py-2 text-xs font-bold text-emerald-300 outline-none">
+                    <option value="pvp2" selected>🤝 2P Pass &amp; Play (Same Device)</option>
+                    <option value="online2">🌐 2P Online Room (Two Phones)</option>
+                    <option value="ai">🤖 Play vs Smart AI Bots</option>
+                    <option value="party">👥 Local Party (All Humans)</option>
+                </select>
+            </div>
+
+            <button type="button" onclick="startNewMatch()"
+                class="btn-press w-full bg-gradient-to-r from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-stone-950 font-black text-xs py-2.5 px-4 rounded-xl shadow">
+                🔄 Start New Match
+            </button>
+        </section>
+
+        <!-- 2-Player Online Room Sync Panel (Shown when 2P Online Room is selected) -->
+        <section id="online-room-panel" class="hidden bg-stone-900/95 border border-emerald-500/40 rounded-2xl p-3 shadow-lg space-y-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                    <p class="text-xs font-black text-emerald-300">🌐 Connected 2-Player Online Room (Two Separate Phones)</p>
+                    <p id="online-sync-status" class="text-[11px] text-stone-400">
+                        Share a Room Code with your friend so both phones stay synced in real time.
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input id="room-code-input" type="text" maxlength="10" placeholder="ROOM12"
+                        class="mono uppercase w-28 bg-stone-950 border border-stone-700 focus:border-emerald-400 rounded-xl px-2.5 py-1.5 text-xs font-bold text-amber-300 outline-none">
+                    <button type="button" onclick="createOnlineRoom()"
+                        class="btn-press bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs px-3 py-1.5 rounded-xl">
+                        Create Room
+                    </button>
+                    <button type="button" onclick="joinOnlineRoom()"
+                        class="btn-press bg-amber-500 hover:bg-amber-400 text-stone-950 font-extrabold text-xs px-3 py-1.5 rounded-xl">
+                        Join Room
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Players Roster -->
+        <section id="players-roster" class="grid grid-cols-2 sm:grid-cols-5 gap-2"></section>
+
+        <!-- Turn & Dice Control -->
+        <section class="bg-stone-900/95 border border-stone-800 rounded-2xl p-3 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="text-center sm:text-left space-y-0.5 flex-1">
+                <div class="flex items-center justify-center sm:justify-start gap-2">
+                    <span id="turn-badge" class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-400/40">
+                        Player 1 Turn
+                    </span>
+                    <span id="board-type-label" class="mono text-[10px] text-stone-400">2P Pass &amp; Play</span>
+                </div>
+                <p id="turn-message" class="text-xs sm:text-sm font-bold text-stone-100">
+                    Tap "Roll Dice" to begin! Roll a 6 to bring a token out.
+                </p>
+            </div>
+
+            <div class="flex items-center gap-3 shrink-0">
+                <div id="dice-box" onclick="handleRollClick()"
+                    class="w-14 h-14 rounded-2xl bg-white text-stone-950 border-2 border-amber-400 shadow-lg flex items-center justify-center text-3xl font-black cursor-pointer">
+                    🎲
+                </div>
+                <button id="roll-btn" type="button" onclick="handleRollClick()"
+                    class="btn-press bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-stone-950 font-black text-xs sm:text-sm px-5 py-3.5 rounded-2xl shadow-lg">
+                    Roll Dice
+                </button>
+            </div>
+        </section>
+
+        <!-- Ludo Board Canvas -->
+        <section class="bg-stone-900/90 border-2 border-amber-500/35 rounded-3xl p-2.5 sm:p-4 shadow-2xl">
+            <div id="board-wrap">
+                <canvas id="ludo-canvas"></canvas>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <section class="bg-stone-900/80 border border-stone-800 rounded-2xl px-3.5 py-2 text-[11px] text-stone-400 flex flex-wrap items-center justify-between gap-2">
+            <span>📍 <strong class="text-stone-200">Alfred Enterprise</strong> • IDA, Kenema City • Win a match to unlock an <strong class="text-amber-300">NLe Discount Code</strong>!</span>
+            <a href="https://wa.me/23276655025?text=Hello%20Alfred%20Enterprise%20(IDA%2C%20Kenema)!%20I%20am%20playing%20Ludo%20on%20your%20website."
+                target="_blank" rel="noopener noreferrer" class="text-emerald-300 font-bold underline">
+                💬 WhatsApp +23276655025
+            </a>
+        </section>
+    </main>
+
+    <!-- Winner Reward Modal -->
+    <div id="winner-modal" class="hidden fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-stone-900 border-2 border-amber-400/60 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 relative text-center">
+            <button type="button" onclick="closeWinnerModal()"
+                class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold">
+                ✕
+            </button>
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-emerald-500 flex items-center justify-center text-3xl shadow-lg">
+                🏆
+            </div>
+            <p id="winner-title" class="text-xl font-black gold-text">PLAYER 1 WINS!</p>
+            <p id="winner-subtitle" class="text-xs text-stone-300">
+                Congratulations! You unlocked <strong class="text-white">NLe 25 OFF + Free IDA/Kenema Delivery</strong> on orders over <strong class="text-amber-300">NLe 150</strong>.
+            </p>
+            <div class="bg-stone-950 border border-dashed border-amber-400/60 rounded-2xl p-3 flex items-center justify-between">
+                <div class="text-left">
+                    <span class="block text-[10px] uppercase text-stone-400 font-bold">Ludo Promo Code</span>
+                    <span id="winner-promo-code" class="text-base font-black mono text-amber-300">AE-LUDO-XXXX</span>
+                </div>
+                <button type="button" onclick="copyWinnerCode(this)"
+                    class="btn-press bg-amber-500 hover:bg-amber-400 text-stone-950 font-extrabold text-xs px-3 py-2 rounded-xl">
+                    Copy Code
+                </button>
+            </div>
+            <div class="space-y-2">
+                <a id="winner-wa-link" href="https://wa.me/23276655025" target="_blank" rel="noopener noreferrer"
+                    class="btn-press w-full bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-black text-sm py-3 rounded-2xl flex items-center justify-center gap-2">
+                    <span>📲</span>
+                    <span>Claim on WhatsApp (+23276655025)</span>
+                </a>
+                <button type="button" onclick="closeWinnerModal(); startNewMatch();"
+                    class="btn-press w-full bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold text-xs py-2.5 rounded-xl">
+                    Play Another Match
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saved Vouchers Modal -->
+    <div id="vouchers-modal" class="hidden fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-stone-900 border border-stone-700 rounded-3xl p-5 shadow-2xl space-y-3 max-h-[80vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-stone-800 pb-2.5">
+                <h2 class="text-base font-black text-amber-300">🎟️ Saved Ludo Vouchers</h2>
+                <button type="button" onclick="closeVouchersModal()" class="w-8 h-8 rounded-full bg-stone-800 text-stone-300 font-bold">✕</button>
+            </div>
+            <div id="vouchers-list" class="flex-1 overflow-y-auto space-y-2"></div>
+            <button type="button" onclick="closeVouchersModal()" class="btn-press w-full bg-stone-800 text-stone-200 font-bold text-xs py-2.5 rounded-xl">Close</button>
+        </div>
+    </div>
+
+    <script>
+        /* =====================================================================
+           OPTIONAL: PASTE YOUR FIREBASE REALTIME DATABASE URL BELOW FOR
+           CONNECTED 2-PHONE ONLINE PLAY (e.g. "https://your-app.firebaseio.com")
+           ===================================================================== */
+        const FIREBASE_DB_URL = "";
+
+        let audioCtx = null;
+        let muted = false;
+        const VOUCHER_KEY = "alfred_ludo_vouchers_v1";
+        const WA_NUMBER = "23276655025";
+        let activePromoCode = "";
+
+        const onlineState = {
+            enabled: false,
+            roomCode: "",
+            localPlayerIdx: 0,
+            pollTimer: null,
+            lastUpdatedAt: 0
+        };
+
+        function playTone(freq, dur, type = "triangle", vol = 0.09) {
+            if (muted) return;
+            try {
+                if (!audioCtx) {
+                    const Ctor = window.AudioContext || window.webkitAudioContext;
+                    if (Ctor) audioCtx = new Ctor();
+                }
+                if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+                if (!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + dur);
+            } catch (e) {}
+        }
+
+        function toggleMute() {
+            muted = !muted;
+            document.getElementById("mute-btn").textContent = muted ? "🔇" : "🔊";
+        }
+
+        function getVouchers() {
+            try { return JSON.parse(localStorage.getItem(VOUCHER_KEY) || "[]"); } catch (e) { return []; }
+        }
+
+        function saveVoucher(v) {
+            try {
+                const list = getVouchers();
+                list.unshift(v);
+                localStorage.setItem(VOUCHER_KEY, JSON.stringify(list.slice(0, 15)));
+            } catch (e) {}
+            document.getElementById("voucher-count").textContent = String(getVouchers().length);
+        }
+
+        function openVouchersModal() {
+            const list = getVouchers();
+            const el = document.getElementById("vouchers-list");
+            if (!list.length) {
+                el.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">No vouchers yet. Win a Ludo match to unlock an NLe discount code!</p>`;
+            } else {
+                el.innerHTML = list.map(v => `
+                    <div class="bg-stone-950 border border-amber-500/30 rounded-xl p-3 space-y-1.5 text-xs">
+                        <p class="font-extrabold text-white">${v.headline}</p>
+                        <p class="mono font-black text-amber-300">${v.code}</p>
+                        <a href="https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hello Alfred Enterprise! I won Ludo (${v.winner}). Code: ${v.code}`)}"
+                           target="_blank" rel="noopener noreferrer"
+                           class="block text-center bg-emerald-500 text-stone-950 font-extrabold py-1.5 rounded-lg">
+                           Claim on WhatsApp ↗
+                        </a>
+                    </div>
+                `).join("");
+            }
+            document.getElementById("vouchers-modal").classList.remove("hidden");
+        }
+
+        function closeVouchersModal() {
+            document.getElementById("vouchers-modal").classList.add("hidden");
+        }
+
+        function copyWinnerCode(btn) {
+            if (!activePromoCode) return;
+            const ta = document.createElement("textarea");
+            ta.value = activePromoCode;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); } catch (e) {}
+            document.body.removeChild(ta);
+            btn.textContent = "Copied ✓";
+        }
+
+        function closeWinnerModal() {
+            document.getElementById("winner-modal").classList.add("hidden");
+        }
+
+        const PLAYER_THEMES = [
+            { name: "Red",    hex: "#ef4444", badge: "bg-red-500/20 text-red-300 border-red-400/40" },
+            { name: "Green",  hex: "#10b981", badge: "bg-emerald-500/20 text-emerald-300 border-emerald-400/40" },
+            { name: "Yellow", hex: "#f59e0b", badge: "bg-amber-500/20 text-amber-300 border-amber-400/40" },
+            { name: "Blue",   hex: "#3b82f6", badge: "bg-blue-500/20 text-blue-300 border-blue-400/40" },
+            { name: "Purple", hex: "#a855f7", badge: "bg-purple-500/20 text-purple-300 border-purple-400/40" }
+        ];
+
+        const DICE_FACES = ["🎲", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+
+        const CLASSIC_RING = [
+            [1,6],[2,6],[3,6],[4,6],[5,6],
+            [6,5],[6,4],[6,3],[6,2],[6,1],[6,0],
+            [7,0],[8,0],
+            [8,1],[8,2],[8,3],[8,4],[8,5],
+            [9,6],[10,6],[11,6],[12,6],[13,6],[14,6],
+            [14,7],[14,8],
+            [13,8],[12,8],[11,8],[10,8],[9,8],
+            [8,9],[8,10],[8,11],[8,12],[8,13],[8,14],
+            [7,14],[6,14],
+            [6,13],[6,12],[6,11],[6,10],[6,9],
+            [5,8],[4,8],[3,8],[2,8],[1,8],[0,8],
+            [0,7],[0,6]
+        ];
+
+        const CLASSIC_HOME_LANES = [
+            [[1,7],[2,7],[3,7],[4,7],[5,7],[6,7]],
+            [[7,1],[7,2],[7,3],[7,4],[7,5],[7,6]],
+            [[13,7],[12,7],[11,7],[10,7],[9,7],[8,7]],
+            [[7,13],[7,12],[7,11],[7,10],[7,9],[7,8]]
+        ];
+
+        const CLASSIC_YARDS = [
+            [[2,2],[3,2],[2,3],[3,3]],
+            [[11,2],[12,2],[11,3],[12,3]],
+            [[11,11],[12,11],[11,12],[12,12]],
+            [[2,11],[3,11],[2,12],[3,12]]
+        ];
+
+        const CLASSIC_START_OFFSET = [0, 13, 26, 39];
+        const CLASSIC_SAFE_INDICES = new Set([0, 8, 13, 21, 26, 34, 39, 47]);
+
+        const game = {
+            numPlayers: 2,
+            mode: "pvp2",
+            players: [],
+            turnIdx: 0,
+            diceValue: null,
+            phase: "ROLL",
+            movableTokenIndices: [],
+            sixStreak: 0,
+            boardGeometry: null
+        };
+
+        const canvas = document.getElementById("ludo-canvas");
+        const ctx = canvas.getContext("2d");
+
+        function stopOnlinePolling() {
+            if (onlineState.pollTimer) {
+                clearInterval(onlineState.pollTimer);
+                onlineState.pollTimer = null;
+            }
+        }
+
+        function setOnlineStatus(msg) {
+            const el = document.getElementById("online-sync-status");
+            if (el) el.textContent = msg;
+        }
+
+        function serializeBoardState() {
+            return {
+                turnIdx: game.turnIdx,
+                diceValue: game.diceValue,
+                phase: game.phase,
+                movableTokenIndices: game.movableTokenIndices,
+                sixStreak: game.sixStreak,
+                tokens: game.players.map(p => [...p.tokens]),
+                updatedAt: Date.now()
+            };
+        }
+
+        async function pushOnlineState(customMessage = "") {
+            if (!onlineState.enabled || !onlineState.roomCode || !FIREBASE_DB_URL) return;
+            const payload = serializeBoardState();
+            onlineState.lastUpdatedAt = payload.updatedAt;
+            try {
+                const base = FIREBASE_DB_URL.replace(/\/+$/, "");
+                await fetch(`${base}/ludoRooms/${encodeURIComponent(onlineState.roomCode)}.json`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                if (customMessage) setOnlineStatus(customMessage);
+            } catch (e) {
+                setOnlineStatus("Sync error — check internet connection.");
+            }
+        }
+
+        function applyRemoteSnapshot(snap) {
+            if (!snap || typeof snap.updatedAt !== "number") return;
+            if (snap.updatedAt <= onlineState.lastUpdatedAt) return;
+            onlineState.lastUpdatedAt = snap.updatedAt;
+
+            game.turnIdx = snap.turnIdx ?? 0;
+            game.diceValue = snap.diceValue ?? null;
+            game.phase = snap.phase || "ROLL";
+            game.movableTokenIndices = Array.isArray(snap.movableTokenIndices) ? snap.movableTokenIndices : [];
+            game.sixStreak = snap.sixStreak ?? 0;
+
+            if (Array.isArray(snap.tokens)) {
+                snap.tokens.forEach((arr, idx) => {
+                    if (game.players[idx] && Array.isArray(arr)) {
+                        game.players[idx].tokens = arr.slice(0, 4);
+                    }
+                });
+            }
+
+            document.getElementById("dice-box").textContent = game.diceValue ? DICE_FACES[game.diceValue] : "🎲";
+            const activeP = game.players[game.turnIdx];
+            const isMyTurn = game.turnIdx === onlineState.localPlayerIdx;
+            updateTurnUI(
+                isMyTurn
+                    ? `Your turn (${activeP.label})! Roll the dice.`
+                    : `Waiting for ${activeP.label} on the other phone...`
+            );
+            drawBoard();
+        }
+
+        function startOnlinePolling() {
+            stopOnlinePolling();
+            if (!onlineState.enabled || !onlineState.roomCode || !FIREBASE_DB_URL) return;
+            const base = FIREBASE_DB_URL.replace(/\/+$/, "");
+            const url = `${base}/ludoRooms/${encodeURIComponent(onlineState.roomCode)}.json`;
+            onlineState.pollTimer = setInterval(async () => {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    applyRemoteSnapshot(data);
+                } catch (e) {}
+            }, 1400);
+        }
+
+        async function createOnlineRoom() {
+            if (!FIREBASE_DB_URL) {
+                setOnlineStatus("Tip: Paste your Firebase Realtime Database URL into FIREBASE_DB_URL inside ludo-game.html to enable 2-phone room sync.");
+                return;
+            }
+            const input = document.getElementById("room-code-input");
+            let code = (input.value || "").trim().toUpperCase();
+            if (!code) {
+                const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+                code = "";
+                for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+                input.value = code;
+            }
+            onlineState.enabled = true;
+            onlineState.roomCode = code;
+            onlineState.localPlayerIdx = 0;
+            startNewMatch(false);
+            await pushOnlineState(`Room ${code} created! You are Player 1 (Red). Tell Player 2 to enter ${code}.`);
+            startOnlinePolling();
+        }
+
+        async function joinOnlineRoom() {
+            if (!FIREBASE_DB_URL) {
+                setOnlineStatus("Tip: Paste your Firebase Realtime Database URL into FIREBASE_DB_URL inside ludo-game.html to enable 2-phone room sync.");
+                return;
+            }
+            const input = document.getElementById("room-code-input");
+            const code = (input.value || "").trim().toUpperCase();
+            if (!code) {
+                setOnlineStatus("Enter a Room Code first to join.");
+                return;
+            }
+            onlineState.enabled = true;
+            onlineState.roomCode = code;
+            onlineState.localPlayerIdx = 1;
+            onlineState.lastUpdatedAt = 0;
+            startNewMatch(false);
+            setOnlineStatus(`Joined Room ${code} as Player 2 (Yellow). Syncing...`);
+            startOnlinePolling();
+        }
+
+        function onSetupChanged() {
+            const countSel = document.getElementById("player-count-select");
+            const modeSel = document.getElementById("match-mode-select");
+            const count = parseInt(countSel.value, 10);
+
+            if (modeSel.value === "online2" && count !== 2) {
+                countSel.value = "2";
+            }
+            if (count === 1 && modeSel.value === "pvp2") {
+                modeSel.value = "ai";
+            }
+
+            const showRoom = modeSel.value === "online2";
+            document.getElementById("online-room-panel").classList.toggle("hidden", !showRoom);
+            if (!showRoom) {
+                onlineState.enabled = false;
+                stopOnlinePolling();
+            }
+            startNewMatch();
+        }
+
+        function startNewMatch(pushIfOnline = true) {
+            const rawCount = parseInt(document.getElementById("player-count-select").value, 10) || 2;
+            const mode = document.getElementById("match-mode-select").value;
+            const actualPlayers = rawCount === 1 ? 2 : rawCount;
+
+            game.numPlayers = actualPlayers;
+            game.mode = mode;
+            game.turnIdx = 0;
+            game.diceValue = null;
+            game.phase = "ROLL";
+            game.movableTokenIndices = [];
+            game.sixStreak = 0;
+
+            const seatMap = actualPlayers === 2 ? [0, 2] : actualPlayers === 3 ? [0, 1, 2] : actualPlayers === 4 ? [0, 1, 2, 3] : [0, 1, 2, 3, 4];
+
+            game.players = seatMap.map((seat, idx) => {
+                let isAI = false;
+                let label = `Player ${idx + 1}`;
+                if (rawCount === 1) {
+                    isAI = idx === 1;
+                    label = idx === 0 ? "You" : "Alfred AI";
+                } else if (mode === "pvp2" || mode === "online2") {
+                    isAI = idx >= 2;
+                    label = idx === 0 ? "Player 1" : idx === 1 ? "Player 2" : `AI Bot ${idx}`;
+                } else if (mode === "ai") {
+                    isAI = idx > 0;
+                    label = idx === 0 ? "You" : `AI Bot ${idx}`;
+                }
+                return {
+                    seat,
+                    label,
+                    theme: PLAYER_THEMES[seat],
+                    isAI,
+                    tokens: [-1, -1, -1, -1]
+                };
+            });
+
+            document.getElementById("dice-box").textContent = "🎲";
+            document.getElementById("board-type-label").textContent =
+                mode === "online2" ? `2P Online (${onlineState.roomCode || "No Room"})` :
+                actualPlayers === 5 ? "5-Player Star Board" :
+                (rawCount === 2 && mode === "pvp2" ? "2-Player Pass & Play" : `${actualPlayers} Players`);
+
+            buildBoardGeometry();
+            renderRoster();
+            updateTurnUI(`${game.players[0].label} (${game.players[0].theme.name}), tap Roll Dice!`);
+            drawBoard();
+
+            if (pushIfOnline && onlineState.enabled) {
+                pushOnlineState(`New match started in Room ${onlineState.roomCode}.`);
+            }
+        }
+
+        function buildBoardGeometry() {
+            const size = 600;
+            if (game.numPlayers < 5) {
+                const cell = size / 15;
+                const toPx = ([gx, gy]) => ({ x: (gx + 0.5) * cell, y: (gy + 0.5) * cell });
+                game.boardGeometry = {
+                    type: "classic",
+                    size,
+                    cell,
+                    ringLen: 52,
+                    homeLen: 6,
+                    finishStep: 56,
+                    ringPts: CLASSIC_RING.map(toPx),
+                    homePts: CLASSIC_HOME_LANES.map(lane => lane.map(toPx)),
+                    yardPts: CLASSIC_YARDS.map(yard => yard.map(toPx)),
+                    startOffsets: CLASSIC_START_OFFSET,
+                    safeSet: CLASSIC_SAFE_INDICES
+                };
+            } else {
+                const cx = size * 0.5;
+                const cy = size * 0.52;
+                const ringLen = 65;
+                const homeLen = 5;
+                const ringPts = [];
+                for (let i = 0; i < ringLen; i++) {
+                    const arm = Math.floor(i / 13);
+                    const sub = i % 13;
+                    const baseAngle = -Math.PI / 2 + (arm * 2 * Math.PI) / 5;
+                    const rOuter = 248;
+                    const rInner = 112;
+                    let x, y;
+                    if (sub < 6) {
+                        const t = sub / 5;
+                        const r = rInner + (rOuter - rInner) * t;
+                        const a = baseAngle - 0.14;
+                        x = cx + Math.cos(a) * r;
+                        y = cy + Math.sin(a) * r;
+                    } else if (sub === 6) {
+                        x = cx + Math.cos(baseAngle) * (rOuter + 14);
+                        y = cy + Math.sin(baseAngle) * (rOuter + 14);
+                    } else {
+                        const t = (sub - 7) / 5;
+                        const r = rOuter - (rOuter - rInner) * t;
+                        const a = baseAngle + 0.14;
+                        x = cx + Math.cos(a) * r;
+                        y = cy + Math.sin(a) * r;
+                    }
+                    ringPts.push({ x, y });
+                }
+
+                const homePts = [];
+                const yardPts = [];
+                const startOffsets = [];
+                const safeSet = new Set();
+
+                for (let s = 0; s < 5; s++) {
+                    startOffsets.push(s * 13);
+                    safeSet.add(s * 13);
+                    safeSet.add(s * 13 + 8);
+                    const baseAngle = -Math.PI / 2 + (s * 2 * Math.PI) / 5;
+                    const lane = [];
+                    for (let h = 0; h < homeLen; h++) {
+                        const r = 212 - h * 34;
+                        lane.push({ x: cx + Math.cos(baseAngle) * r, y: cy + Math.sin(baseAngle) * r });
+                    }
+                    homePts.push(lane);
+
+                    const yardAngle = baseAngle - Math.PI / 5;
+                    const yr = 232;
+                    const yx = cx + Math.cos(yardAngle) * yr;
+                    const yy = cy + Math.sin(yardAngle) * yr;
+                    yardPts.push([
+                        { x: yx - 13, y: yy - 13 },
+                        { x: yx + 13, y: yy - 13 },
+                        { x: yx - 13, y: yy + 13 },
+                        { x: yx + 13, y: yy + 13 }
+                    ]);
+                }
+
+                game.boardGeometry = {
+                    type: "star5",
+                    size,
+                    ringLen,
+                    homeLen,
+                    finishStep: ringLen - 1 + homeLen,
+                    ringPts,
+                    homePts,
+                    yardPts,
+                    startOffsets,
+                    safeSet
+                };
+            }
+        }
+
+        function getGlobalRingIndex(seat, step) {
+            const g = game.boardGeometry;
+            return (g.startOffsets[seat] + step) % g.ringLen;
+        }
+
+        function getTokenCoords(player, tokenIdx) {
+            const g = game.boardGeometry;
+            const step = player.tokens[tokenIdx];
+            if (step < 0) return g.yardPts[player.seat][tokenIdx];
+            if (step < g.ringLen - 1) {
+                return g.ringPts[getGlobalRingIndex(player.seat, step)];
+            }
+            const homeIdx = Math.min(g.homeLen - 1, step - (g.ringLen - 1));
+            return g.homePts[player.seat][homeIdx];
+        }
+
+        function renderRoster() {
+            const box = document.getElementById("players-roster");
+            box.innerHTML = game.players.map((p, idx) => {
+                const done = p.tokens.filter(t => t >= game.boardGeometry.finishStep).length;
+                const active = idx === game.turnIdx && game.phase !== "OVER";
+                return `
+                    <div class="rounded-xl px-2.5 py-2 border text-xs flex items-center justify-between ${
+                        active ? "bg-stone-800 border-amber-400 shadow" : "bg-stone-950/80 border-stone-800 opacity-80"
+                    }">
+                        <div class="flex items-center gap-1.5 truncate">
+                            <span class="w-3 h-3 rounded-full shrink-0" style="background:${p.theme.hex}"></span>
+                            <span class="font-extrabold truncate">${p.label}</span>
+                        </div>
+                        <span class="mono text-[11px] font-bold text-stone-300">${done}/4</span>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function updateTurnUI(msg) {
+            const p = game.players[game.turnIdx];
+            const badge = document.getElementById("turn-badge");
+            badge.textContent = `${p.label} (${p.theme.name})`;
+            badge.className = `text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${p.theme.badge}`;
+            document.getElementById("turn-message").textContent = msg;
+            const blockedByOnline = onlineState.enabled && game.turnIdx !== onlineState.localPlayerIdx;
+            document.getElementById("roll-btn").disabled = p.isAI || blockedByOnline || game.phase !== "ROLL";
+            renderRoster();
+        }
+
+        function getValidMoves(player, roll) {
+            const g = game.boardGeometry;
+            const valid = [];
+            player.tokens.forEach((step, idx) => {
+                if (step === -1 && roll === 6) valid.push(idx);
+                else if (step >= 0 && step + roll <= g.finishStep) valid.push(idx);
+            });
+            return valid;
+        }
+
+        function handleRollClick() {
+            if (game.phase !== "ROLL") return;
+            const p = game.players[game.turnIdx];
+            if (p.isAI) return;
+            if (onlineState.enabled && game.turnIdx !== onlineState.localPlayerIdx) return;
+            executeDiceRoll();
+        }
+
+        function executeDiceRoll() {
+            game.phase = "ANIMATING";
+            const diceEl = document.getElementById("dice-box");
+            diceEl.classList.add("dice-rolling");
+            playTone(380, 0.08, "square", 0.07);
+
+            setTimeout(() => {
+                diceEl.classList.remove("dice-rolling");
+                const roll = Math.floor(Math.random() * 6) + 1;
+                game.diceValue = roll;
+                diceEl.textContent = DICE_FACES[roll];
+                playTone(roll === 6 ? 780 : 520, 0.12, "triangle", 0.11);
+
+                const p = game.players[game.turnIdx];
+                if (roll === 6) {
+                    game.sixStreak += 1;
+                    if (game.sixStreak >= 3) {
+                        game.sixStreak = 0;
+                        updateTurnUI(`${p.label} rolled three 6s in a row — turn passes!`);
+                        setTimeout(() => {
+                            advanceTurn();
+                            if (onlineState.enabled) pushOnlineState();
+                        }, 850);
+                        return;
+                    }
+                } else {
+                    game.sixStreak = 0;
+                }
+
+                const moves = getValidMoves(p, roll);
+                if (!moves.length) {
+                    updateTurnUI(`${p.label} rolled ${roll} — no valid moves.`);
+                    setTimeout(() => {
+                        advanceTurn();
+                        if (onlineState.enabled) pushOnlineState();
+                    }, 850);
+                    return;
+                }
+
+                game.movableTokenIndices = moves;
+                game.phase = "MOVE";
+                drawBoard();
+
+                if (p.isAI) {
+                    updateTurnUI(`${p.label} rolled ${roll} and is moving...`);
+                    setTimeout(() => {
+                        const chosen = chooseBestAIMove(p, moves, roll);
+                        applyTokenMove(chosen);
+                    }, 520);
+                } else if (moves.length === 1) {
+                    updateTurnUI(`${p.label} rolled ${roll}! Moving token automatically...`);
+                    setTimeout(() => applyTokenMove(moves[0]), 380);
+                } else {
+                    updateTurnUI(`${p.label} rolled ${roll}! Tap one of your glowing tokens to move.`);
+                }
+
+                if (onlineState.enabled) pushOnlineState();
+            }, 340);
+        }
+
+        function chooseBestAIMove(player, moves, roll) {
+            const g = game.boardGeometry;
+            let bestIdx = moves[0];
+            let bestScore = -999;
+
+            for (const idx of moves) {
+                let score = 0;
+                const cur = player.tokens[idx];
+                if (cur === -1) score += 60;
+                else {
+                    const next = cur + roll;
+                    if (next === g.finishStep) score += 100;
+                    if (next < g.ringLen - 1) {
+                        const targetGlobal = getGlobalRingIndex(player.seat, next);
+                        if (g.safeSet.has(targetGlobal)) score += 30;
+                        for (const opp of game.players) {
+                            if (opp === player) continue;
+                            opp.tokens.forEach(oStep => {
+                                if (oStep >= 0 && oStep < g.ringLen - 1 && getGlobalRingIndex(opp.seat, oStep) === targetGlobal && !g.safeSet.has(targetGlobal)) {
+                                    score += 85;
+                                }
+                            });
+                        }
+                    }
+                    score += next * 0.4;
+                }
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestIdx = idx;
+                }
+            }
+            return bestIdx;
+        }
+
+        function applyTokenMove(tokenIdx) {
+            if (game.phase !== "MOVE" || !game.movableTokenIndices.includes(tokenIdx)) return;
+            const p = game.players[game.turnIdx];
+            const g = game.boardGeometry;
+            const roll = game.diceValue;
+            let captured = false;
+
+            if (p.tokens[tokenIdx] === -1) {
+                p.tokens[tokenIdx] = 0;
+                playTone(620, 0.12, "triangle", 0.11);
+            } else {
+                p.tokens[tokenIdx] += roll;
+                playTone(540, 0.1, "sine", 0.1);
+            }
+
+            const newStep = p.tokens[tokenIdx];
+            if (newStep >= 0 && newStep < g.ringLen - 1) {
+                const landGlobal = getGlobalRingIndex(p.seat, newStep);
+                if (!g.safeSet.has(landGlobal)) {
+                    for (const opp of game.players) {
+                        if (opp === p) continue;
+                        opp.tokens.forEach((oStep, oIdx) => {
+                            if (oStep >= 0 && oStep < g.ringLen - 1 && getGlobalRingIndex(opp.seat, oStep) === landGlobal) {
+                                opp.tokens[oIdx] = -1;
+                                captured = true;
+                            }
+                        });
+                    }
+                }
+            }
+
+            game.movableTokenIndices = [];
+            drawBoard();
+            renderRoster();
+
+            if (p.tokens.every(t => t >= g.finishStep)) {
+                game.phase = "OVER";
+                triggerWinReward(p);
+                if (onlineState.enabled) pushOnlineState();
+                return;
+            }
+
+            if (roll === 6 || captured || newStep === g.finishStep) {
+                game.phase = "ROLL";
+                const reason = captured ? "Captured an opponent! Bonus roll!" : newStep === g.finishStep ? "Token reached Home! Bonus roll!" : "Rolled a 6! Bonus roll!";
+                updateTurnUI(`${p.label}: ${reason}`);
+                if (p.isAI) setTimeout(executeDiceRoll, 600);
+            } else {
+                advanceTurn();
+            }
+
+            if (onlineState.enabled) pushOnlineState();
+        }
+
+        function advanceTurn() {
+            game.turnIdx = (game.turnIdx + 1) % game.players.length;
+            game.phase = "ROLL";
+            game.diceValue = null;
+            game.movableTokenIndices = [];
+            game.sixStreak = 0;
+            const nextP = game.players[game.turnIdx];
+            updateTurnUI(`${nextP.label} (${nextP.theme.name}), roll the dice!`);
+            drawBoard();
+            if (nextP.isAI) {
+                setTimeout(executeDiceRoll, 600);
+            }
+        }
+
+        function triggerWinReward(winner) {
+            playTone(523.25, 0.12);
+            setTimeout(() => playTone(659.25, 0.12), 110);
+            setTimeout(() => playTone(783.99, 0.24), 220);
+
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            let suffix = "";
+            for (let i = 0; i < 4; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+            const code = `AE-LUDO-${suffix}`;
+            activePromoCode = code;
+
+            const headline = game.numPlayers >= 4
+                ? "NLe 30 OFF + Free IDA/Kenema Delivery"
+                : "NLe 20 OFF Your Next Order";
+
+            saveVoucher({ code, winner: winner.label, headline });
+
+            document.getElementById("winner-title").textContent = `${winner.label.toUpperCase()} WINS!`;
+            document.getElementById("winner-subtitle").innerHTML =
+                `Awesome match! You unlocked <strong class="text-white">${headline}</strong> on orders over <strong class="text-amber-300">NLe 150</strong> at Alfred Enterprise (IDA, Kenema).`;
+            document.getElementById("winner-promo-code").textContent = code;
+            document.getElementById("winner-wa-link").href =
+                `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hello Alfred Enterprise (IDA, Kenema)! 🏆\n${winner.label} won a ${game.numPlayers}-Player Ludo match!\nPromo Code: ${code}\nReward: ${headline} (orders over NLe 150).`)}`;
+            document.getElementById("winner-modal").classList.remove("hidden");
+        }
+
+        canvas.addEventListener("pointerdown", (e) => {
+            if (game.phase !== "MOVE") return;
+            const p = game.players[game.turnIdx];
+            if (p.isAI) return;
+            if (onlineState.enabled && game.turnIdx !== onlineState.localPlayerIdx) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = 600 / rect.width;
+            const scaleY = 600 / rect.height;
+            const px = (e.clientX - rect.left) * scaleX;
+            const py = (e.clientY - rect.top) * scaleY;
+
+            for (const idx of game.movableTokenIndices) {
+                const pt = getTokenCoords(p, idx);
+                if (Math.hypot(px - pt.x, py - pt.y) <= 26) {
+                    applyTokenMove(idx);
+                    return;
+                }
+            }
+        });
+
+        function drawBoard() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            const size = 600;
+            if (canvas.width !== size * dpr) {
+                canvas.width = size * dpr;
+                canvas.height = size * dpr;
+            }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, size, size);
+
+            const g = game.boardGeometry;
+            ctx.fillStyle = "#fafaf9";
+            ctx.fillRect(0, 0, size, size);
+
+            if (g.type === "classic") {
+                const c = g.cell;
+                const yardRects = [
+                    { x: 0, y: 0, color: PLAYER_THEMES[0].hex },
+                    { x: 9 * c, y: 0, color: PLAYER_THEMES[1].hex },
+                    { x: 9 * c, y: 9 * c, color: PLAYER_THEMES[2].hex },
+                    { x: 0, y: 9 * c, color: PLAYER_THEMES[3].hex }
+                ];
+                yardRects.forEach((yr, s) => {
+                    ctx.fillStyle = yr.color;
+                    ctx.fillRect(yr.x, yr.y, 6 * c, 6 * c);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.beginPath();
+                    ctx.roundRect(yr.x + c * 0.85, yr.y + c * 0.85, 4.3 * c, 4.3 * c, 14);
+                    ctx.fill();
+                    g.yardPts[s].forEach(pt => {
+                        ctx.fillStyle = yr.color;
+                        ctx.beginPath();
+                        ctx.arc(pt.x, pt.y, c * 0.36, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                });
+
+                g.homePts.forEach((lane, s) => {
+                    lane.forEach((pt, idx) => {
+                        if (idx === 5) return;
+                        ctx.fillStyle = PLAYER_THEMES[s].hex;
+                        ctx.fillRect(pt.x - c / 2, pt.y - c / 2, c, c);
+                    });
+                });
+
+                g.startOffsets.forEach((off, s) => {
+                    const pt = g.ringPts[off];
+                    ctx.fillStyle = PLAYER_THEMES[s].hex;
+                    ctx.fillRect(pt.x - c / 2, pt.y - c / 2, c, c);
+                });
+
+                g.ringPts.forEach((pt, idx) => {
+                    ctx.strokeStyle = "#cbd5e1";
+                    ctx.lineWidth = 1.2;
+                    ctx.strokeRect(pt.x - c / 2, pt.y - c / 2, c, c);
+                    if (g.safeSet.has(idx)) {
+                        ctx.fillStyle = "#94a3b8";
+                        ctx.font = "bold 18px sans-serif";
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+                        ctx.fillText("★", pt.x, pt.y + 1);
+                    }
+                });
+
+                const mid = 7.5 * c;
+                const triCorners = [
+                    [[6 * c, 6 * c], [6 * c, 9 * c], PLAYER_THEMES[0].hex],
+                    [[6 * c, 6 * c], [9 * c, 6 * c], PLAYER_THEMES[1].hex],
+                    [[9 * c, 6 * c], [9 * c, 9 * c], PLAYER_THEMES[2].hex],
+                    [[6 * c, 9 * c], [9 * c, 9 * c], PLAYER_THEMES[3].hex]
+                ];
+                triCorners.forEach(([p1, p2, col]) => {
+                    ctx.fillStyle = col;
+                    ctx.beginPath();
+                    ctx.moveTo(mid, mid);
+                    ctx.lineTo(p1[0], p1[1]);
+                    ctx.lineTo(p2[0], p2[1]);
+                    ctx.closePath();
+                    ctx.fill();
+                });
+            } else {
+                ctx.fillStyle = "#1c1917";
+                ctx.fillRect(0, 0, size, size);
+
+                ctx.strokeStyle = "rgba(251, 191, 36, 0.25)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                g.ringPts.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
+                ctx.closePath();
+                ctx.stroke();
+
+                g.homePts.forEach((lane, s) => {
+                    lane.forEach(pt => {
+                        ctx.fillStyle = PLAYER_THEMES[s].hex;
+                        ctx.beginPath();
+                        ctx.arc(pt.x, pt.y, 12, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                });
+
+                g.yardPts.forEach((yard, s) => {
+                    yard.forEach(pt => {
+                        ctx.fillStyle = PLAYER_THEMES[s].hex;
+                        ctx.beginPath();
+                        ctx.arc(pt.x, pt.y, 11, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                });
+
+                g.ringPts.forEach((pt, idx) => {
+                    const startSeat = g.startOffsets.indexOf(idx);
+                    ctx.fillStyle = startSeat >= 0 ? PLAYER_THEMES[startSeat].hex : (g.safeSet.has(idx) ? "#fde68a" : "#44403c");
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, 11.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = "#fafaf9";
+                    ctx.lineWidth = 1.2;
+                    ctx.stroke();
+                });
+
+                ctx.fillStyle = "#f59e0b";
+                ctx.beginPath();
+                ctx.arc(size * 0.5, size * 0.52, 28, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const activePlayer = game.players[game.turnIdx];
+            game.players.forEach(p => {
+                p.tokens.forEach((step, idx) => {
+                    const pt = getTokenCoords(p, idx);
+                    const ox = (idx % 2 === 0 ? -4 : 4);
+                    const oy = (idx < 2 ? -4 : 4);
+                    const tx = pt.x + ox;
+                    const ty = pt.y + oy;
+
+                    const isMovable = game.phase === "MOVE" && p === activePlayer && game.movableTokenIndices.includes(idx);
+
+                    if (isMovable) {
+                        ctx.strokeStyle = "#ffffff";
+                        ctx.lineWidth = 4;
+                        ctx.beginPath();
+                        ctx.arc(tx, ty, 17, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+
+                    ctx.fillStyle = "rgba(0,0,0,0.45)";
+                    ctx.beginPath();
+                    ctx.arc(tx, ty + 2, 12.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = p.theme.hex;
+                    ctx.beginPath();
+                    ctx.arc(tx, ty, 12.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 2.2;
+                    ctx.stroke();
+
+                    ctx.fillStyle = "rgba(255,255,255,0.65)";
+                    ctx.beginPath();
+                    ctx.arc(tx - 3.5, ty - 3.5, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            });
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("voucher-count").textContent = String(getVouchers().length);
+            startNewMatch(false);
+        });
+    </script>
+</body>
+</html>
