@@ -71,7 +71,7 @@
                         IDA, Kenema
                     </span>
                 </div>
-                <p class="text-[11px] text-sky-100/80 truncate">First to 7 Goals • Drag Paddle to Strike</p>
+                <p class="text-[11px] text-sky-100/80 truncate">First to 7 Goals • 2 Human Players Ready</p>
             </div>
         </div>
 
@@ -102,14 +102,14 @@
                 </label>
                 <select id="hockey-mode" onchange="resetMatch()"
                     class="w-full bg-slate-950/90 border-2 border-sky-400/40 rounded-2xl px-3 py-2 text-xs font-extrabold text-emerald-300 outline-none">
-                    <option value="ai" selected>🤖 1P VS Computer</option>
-                    <option value="pvp">🤝 2P Pass &amp; Play</option>
+                    <option value="pvp" selected>🤝 2P Human VS Human</option>
+                    <option value="ai">🤖 1P VS Computer</option>
                 </select>
             </div>
 
             <div>
                 <label for="hockey-level" class="block text-[10px] uppercase tracking-wider text-sky-200 font-extrabold mb-1">
-                    AI Speed
+                    AI Speed (1P Mode)
                 </label>
                 <select id="hockey-level" onchange="resetMatch()"
                     class="w-full bg-slate-950/90 border-2 border-sky-400/40 rounded-2xl px-3 py-2 text-xs font-extrabold text-amber-300 outline-none">
@@ -128,17 +128,17 @@
         <!-- Scoreboard -->
         <section class="glossy-panel rounded-3xl px-4 py-2.5 flex items-center justify-between gap-3">
             <div class="text-center bg-slate-950/80 border border-sky-300/40 rounded-2xl px-3.5 py-1.5 min-w-[82px]">
-                <span id="top-label" class="block text-[10px] uppercase text-sky-300 font-bold">CPU</span>
+                <span id="top-label" class="block text-[10px] uppercase text-sky-300 font-bold">P2 (TOP)</span>
                 <span id="top-score" class="mono text-lg font-black text-white">0</span>
             </div>
 
             <div class="text-center flex-1">
-                <p id="hockey-status" class="text-xs sm:text-sm font-black text-amber-300">Drag bottom gold paddle to hit the puck!</p>
-                <p class="text-[10px] text-sky-200/80 mono">Wins: <span id="wins-count">0</span> • Streak: <span id="streak-count">0</span></p>
+                <p id="hockey-status" class="text-xs sm:text-sm font-black text-amber-300">2P Human Mode: Top touches P2, Bottom touches P1!</p>
+                <p class="text-[10px] text-sky-200/80 mono">AI Wins: <span id="wins-count">0</span> • AI Streak: <span id="streak-count">0</span></p>
             </div>
 
             <div class="text-center bg-slate-950/80 border border-amber-300/45 rounded-2xl px-3.5 py-1.5 min-w-[82px]">
-                <span id="bottom-label" class="block text-[10px] uppercase text-amber-300 font-bold">YOU</span>
+                <span id="bottom-label" class="block text-[10px] uppercase text-amber-300 font-bold">P1 (BOT)</span>
                 <span id="bottom-score" class="mono text-lg font-black text-amber-300">0</span>
             </div>
         </section>
@@ -164,7 +164,7 @@
     <div id="end-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="w-full max-w-sm glossy-panel border-2 border-amber-300 rounded-3xl p-5 space-y-4 text-center">
             <div class="w-14 h-14 mx-auto rounded-2xl tile-gold flex items-center justify-center text-3xl">🏆</div>
-            <p id="end-title" class="text-xl font-black text-amber-300 arcade-title">YOU WIN!</p>
+            <p id="end-title" class="text-xl font-black text-amber-300 arcade-title">PLAYER 1 WINS!</p>
             <p id="end-sub" class="text-xs text-sky-100/90">Final Score: 7 - 3</p>
             <div class="space-y-2 pt-1">
                 <button type="button" onclick="closeEndModal(); resetMatch();" class="btn-press tile-gold w-full font-black text-xs py-3 rounded-2xl">
@@ -200,7 +200,7 @@
         } catch (e) {}
 
         const state = {
-            mode: "ai",
+            mode: "pvp",
             level: "pro",
             topScore: 0,
             bottomScore: 0,
@@ -294,7 +294,9 @@
 
             servePuck(-1);
             document.getElementById("hockey-status").textContent =
-                state.mode === "ai" ? "Drag bottom gold paddle to hit the puck!" : "2P Mode: Bottom = P1, Top = P2";
+                state.mode === "ai"
+                    ? "Drag bottom gold paddle to hit the puck!"
+                    : "2P Human Mode: Top touches P2, Bottom touches P1!";
         }
 
         function clampPaddle(pad, isBottom) {
@@ -412,12 +414,13 @@
                 state.bottomScore += 1;
                 document.getElementById("bottom-score").textContent = String(state.bottomScore);
                 soundBeep(660, 0.14, "triangle", 0.1);
-                document.getElementById("hockey-status").textContent = "GOAL! Bottom scores!";
+                document.getElementById("hockey-status").textContent = "GOAL! Player 1 (Bottom) scores!";
             } else {
                 state.topScore += 1;
                 document.getElementById("top-score").textContent = String(state.topScore);
                 soundBeep(280, 0.16, "sawtooth", 0.08);
-                document.getElementById("hockey-status").textContent = "GOAL! Top scores!";
+                document.getElementById("hockey-status").textContent =
+                    state.mode === "ai" ? "GOAL! CPU scores!" : "GOAL! Player 2 (Top) scores!";
             }
 
             if (state.bottomScore >= WIN_GOAL || state.topScore >= WIN_GOAL) {
@@ -433,7 +436,9 @@
                     saveStats();
                 }
                 document.getElementById("end-title").textContent =
-                    state.mode === "ai" ? (bottomWon ? "YOU WIN!" : "CPU WINS!") : (bottomWon ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!");
+                    state.mode === "ai"
+                        ? (bottomWon ? "YOU WIN!" : "CPU WINS!")
+                        : (bottomWon ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!");
                 document.getElementById("end-sub").textContent =
                     `Final Score: ${state.bottomScore} - ${state.topScore} • Alfred Enterprise (IDA, Kenema)`;
                 document.getElementById("end-modal").classList.remove("hidden");
@@ -448,10 +453,11 @@
             if (state.goalFlash > 0) state.goalFlash = Math.max(0, state.goalFlash - dt);
 
             const keySpeed = 340;
-            if (state.keys["arrowleft"] || state.keys["a"]) state.p1.x -= keySpeed * dt;
-            if (state.keys["arrowright"] || state.keys["d"]) state.p1.x += keySpeed * dt;
-            if (state.keys["arrowup"] || state.keys["w"]) state.p1.y -= keySpeed * dt;
-            if (state.keys["arrowdown"] || state.keys["s"]) state.p1.y += keySpeed * dt;
+            // Player 1 (Bottom): Arrow Keys
+            if (state.keys["arrowleft"]) state.p1.x -= keySpeed * dt;
+            if (state.keys["arrowright"]) state.p1.x += keySpeed * dt;
+            if (state.keys["arrowup"]) state.p1.y -= keySpeed * dt;
+            if (state.keys["arrowdown"]) state.p1.y += keySpeed * dt;
             clampPaddle(state.p1, true);
 
             if (state.mode === "ai") {
@@ -466,17 +472,20 @@
                 state.p2.y += state.p2.vy * dt;
                 clampPaddle(state.p2, false);
             } else {
+                // Player 2 (Top): W / A / S / D + Top-half touch
+                if (state.keys["a"]) state.p2.x -= keySpeed * dt;
+                if (state.keys["d"]) state.p2.x += keySpeed * dt;
+                if (state.keys["w"]) state.p2.y -= keySpeed * dt;
+                if (state.keys["s"]) state.p2.y += keySpeed * dt;
                 clampPaddle(state.p2, false);
             }
 
             state.puck.x += state.puck.vx * dt;
             state.puck.y += state.puck.vy * dt;
 
-            // Gentle drag
             state.puck.vx *= Math.pow(0.992, dt * 60);
             state.puck.vy *= Math.pow(0.992, dt * 60);
 
-            // Side wall bounce
             const leftWall = 24 + state.puck.r;
             const rightWall = W - 24 - state.puck.r;
             if (state.puck.x < leftWall) {
@@ -495,7 +504,6 @@
             const goalHalf = 68;
             const inGoalMouth = Math.abs(state.puck.x - W / 2) < goalHalf;
 
-            // Top goal line
             if (state.puck.y - state.puck.r < 24) {
                 if (inGoalMouth) {
                     handleGoal("bottom");
@@ -506,7 +514,6 @@
                 }
             }
 
-            // Bottom goal line
             if (state.puck.y + state.puck.r > H - 24) {
                 if (inGoalMouth) {
                     handleGoal("top");
@@ -526,18 +533,15 @@
             }
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-            // Rink surface
             ctx.fillStyle = state.goalFlash > 0 ? "#1e3a8a" : "#0b1736";
             ctx.fillRect(0, 0, W, H);
 
-            // Border rail
             ctx.strokeStyle = "#38bdf8";
             ctx.lineWidth = 6;
             ctx.beginPath();
             ctx.roundRect(18, 18, W - 36, H - 36, 20);
             ctx.stroke();
 
-            // Center line & circle
             ctx.strokeStyle = "rgba(147, 197, 253, 0.35)";
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -549,7 +553,6 @@
             ctx.arc(W / 2, H / 2, 54, 0, Math.PI * 2);
             ctx.stroke();
 
-            // Goal mouths
             ctx.strokeStyle = "#facc15";
             ctx.lineWidth = 5;
             ctx.beginPath();
