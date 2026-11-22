@@ -1049,7 +1049,7 @@
             if (!name || !phone || !location) return alert("Please fill in your name, phone number, and delivery location.");
 
             const msg = [
-                "Hello Alfred Enterprise, I would like to place an order:",
+                "Hello Alfred Enterprise (IDA, Kenema), I would like to place an order:",
                 `• Item: ${item.name} (${item.optionName}) — NLe ${item.price}`,
                 `• Customer: ${name}`,
                 `• Phone: ${phone}`,
@@ -1072,7 +1072,7 @@
             const lines = cart.map(i => `• ${i.name} (${i.optionName}) x${i.qty} — NLe ${i.price * i.qty}`);
             const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
             const msg = [
-                "Hello Alfred Enterprise, I would like to place a cart order:",
+                "Hello Alfred Enterprise (IDA, Kenema), I would like to place a cart order:",
                 ...lines,
                 `• Total: NLe ${total}`,
                 `• Customer: ${name}`,
@@ -1143,18 +1143,8 @@
         }
     </script>
 
-    <!--Start of Tawk.to Script-->
-    <script type="text/javascript">
-    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-    (function(){
-    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-    s1.async=true;
-    s1.src='https://embed.tawk.to/6b00d2946c24e43c9e0bc1f7/1k7tjd5n0';
-    s1.charset='UTF-8';
-    s1.setAttribute('crossorigin','*');
-    s0.parentNode.insertBefore(s1,s0);
-    })();
-    </script>
-    <!--End of Tawk.to Script-->
+    <!-- Start of Tidio Live Chat & AI Script -->
+    <script src="//code.tidio.co/mq3umoot4rd0rakpauff7byejgjb7fcy.js" async></script>
+    <!-- End of Tidio Script -->
 </body>
 </html>
